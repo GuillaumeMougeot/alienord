@@ -1,0 +1,4 @@
+connection.id:                          Wired connection 3
+ipv4.route-metric:                      50
+ipv6.route-metric:                      50
+ipv4.method:                            auto

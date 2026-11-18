@@ -1,0 +1,31 @@
+source:
+  FAKESRC: False
+  CAMERA_ON: False
+  files: 
+    - file:///workspaces/vd-biodiversity/bio/data/out2.mp4
+
+sink:
+  FAKESINK: False
+  ONSCREEN: True
+  OUTPUT_FILE: data/biodiversity-output.mp4
+  OVERLAY: True
+
+gps:
+  GPS_DATA_PATH: data/gps-data.json
+  
+images:
+  PATH: data/
+
+statistics:
+  ENABLED: True
+  PATH: 'data/statistics.txt'
+
+logs:
+  LOG_FILE: 'data/logs/deepstream.txt'
+
+heartbeat:
+  SECONDS: 10
+  SINK: 'data/heartbeat.txt'
+
+pid:
+  PATH: 'data/deepstream.pid'

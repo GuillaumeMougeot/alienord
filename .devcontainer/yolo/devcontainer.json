@@ -1,0 +1,35 @@
+{
+    "image": "roadkill-train:latest",
+    "remoteUser": "trainer",
+    "updateRemoteUserUID": true,
+    "overrideCommand": false,
+    "mounts": [
+        // on our laptops
+        "type=bind,source=/home/${localEnv:USER}/.darwin/datasets,target=/workspaces/.darwin/datasets",
+        // on the VM
+        // "type=bind,source=/opt/shared/darwin_datasets,target=/workspaces/.darwin/datasets",
+        // "type=bind,source=/opt/shared/datasets,target=/workspaces/vd-biodiversity/training/datasets"
+    ],
+    "runArgs": [
+        "--rm",
+        "--network=host",
+        // "--gpus=all",
+        "--cap-add=SYSLOG",
+        "--shm-size=10G",
+        "-e",
+        "DISPLAY=${localEnv:DISPLAY}",
+        "-e",
+        "CUDA_CACHE_DISABLE=0",
+        "-e",
+        "__NV_PRIME_RENDER_OFFLOAD=1",
+        "-e",
+        "CUDA_MODULE_LOADING=LAZY",
+        "-e",
+        "PYTHONPATH=training/yolo"
+    ],
+    "extensions": [
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "eamodio.gitlens"
+    ]
+}

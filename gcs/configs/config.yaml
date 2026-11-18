@@ -1,0 +1,23 @@
+DEVICE_ID: '' # Fill in dinamically 
+
+cloud:
+  SECRETS_PATH: '/var/secrets/nordfou-biodiversity-2cd0fb3af162.json'
+  BUCKET_NAME: 'data-biodiversity'
+  MINUTES: 15
+  directories:
+    - name: 'meta'
+    - name: 'images'
+    - name: 'recordings'
+
+data:
+  PATH: '/media/data/'
+
+
+heartbeat:
+  SECONDS: 10 # Has to be less than half of the "checking" time seconds of the heartbeat checker of the monitoring app (it'll be in core)
+  SINK: '/var/shared/heartbeat/gcs.txt'
+
+logs:
+  ENABLED: True
+  LOG_LEVEL: 'DEBUG'
+  LOG_FILE: '/var/shared/logs/gcs.txt'

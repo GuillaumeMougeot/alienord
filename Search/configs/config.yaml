@@ -1,0 +1,19 @@
+cloud:
+  IMAGE_EXTENSION: 'jpg'
+  META_EXTENSION: 'json'
+  BUCKET_NAME: 'data-biodiversity'
+  PATH_TO_FILE: 'meta.json'
+  buckets:
+    - name: 'images'
+    - name: 'meta'
+    - name: 'recordings'
+
+privacy:
+  PUBLISH_THRESHOLD: 0.1
+  MODEL_THRESHOLD: 0.5
+  MODEL_PATH: 'models/yolov8n.pt'
+
+logs:
+  ENABLED: True
+  LOG_LEVEL: 'DEBUG'
+  LOG_FILE: 'data/search.txt'

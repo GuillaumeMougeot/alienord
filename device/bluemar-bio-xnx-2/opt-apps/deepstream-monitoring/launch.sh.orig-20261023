@@ -1,0 +1,68 @@
+#!/bin/bash
+
+source .env
+
+read_heartbeat(){
+    cat $PATH_TO_HEARTBEAT
+}
+
+check_heartbeat(){
+    heartbeat=$(read_heartbeat)
+
+    if [ $((now - heartbeat)) -lt $((HEARTBEAT_SECONDS * 1000)) ]; then
+        echo "Heartbeat ok"
+        bash set_led.sh 1 off
+    else
+        echo "Heartbeat outdated, turning led ..."
+        bash set_led.sh 1 on
+    fi
+    
+}
+
+check_files_age(){
+    for file in "$1"/*; do
+        file_name=$(basename "$file")
+        creation=$(date -d "$(stat -c %y "$file")" "+%s")
+        if [ $((now - creation)) -lt $((DATA_DAYS * 24 * 3600)) ]; then
+            echo "Timestamp for $file_name ok"
+        else
+            echo "Timestamp for $file_name is too old"
+        fi
+    done
+}
+
+check_annotations_imgs(){
+    echo "Checking images"
+    if [ "$(ls -A $PATH_TO_IMAGES)" ]; then
+        check_files_age $PATH_TO_IMAGES
+    else
+        echo "There are no images to check"
+    fi
+
+    echo "Checking annotations"
+    if [ "$(ls -A $PATH_TO_ANNOTATIONS)" ]; then
+        check_files_age $PATH_TO_ANNOTATIONS
+    else
+        echo "There are no annotations to check"
+    fi
+}
+
+while true; do
+
+    now=$(date -u +%s%3N)
+
+    echo "Checking heartbeat ..."
+    
+    if content=$(cat $PATH_TO_HEARTBEAT 2>/dev/null); then
+        check_heartbeat
+    else
+        echo "Heartbeat is not available"
+    fi
+
+    if [ $((now - last_check)) -ge $((DATA_DAYS * 24 * 3600)) ]; then
+        check_annotations_imgs
+        last_check=$(date -u +%s%3N)
+    fi
+
+    sleep $HEARTBEAT_SECONDS
+done

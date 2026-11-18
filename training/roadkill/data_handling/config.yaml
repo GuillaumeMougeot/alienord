@@ -1,0 +1,24 @@
+#local data directory
+data_dir: /Users/aleksandra/Desktop/Roadkill_project/data_VD_Roadkill
+meta_dir: /Users/aleksandra/Desktop/Roadkill_project/data_VD_Roadkill/meta
+
+# GCS
+bucket_name: data-biodiversity
+# filename of the .json key to gcs
+gcs_key_filename: ../secrets/gcs_key.json
+report_roadkill_file_name: report_roadkill.csv
+# subfolders with images and metadata in gcs
+subfolders:
+  - "xnx1"
+  - "xnx2"
+
+
+#folder structure in the local data directory
+checked_img_dir_names:
+- checked
+- images-anim
+- images-unblurred-license
+
+# local output directory for csv file to investigate before pushing to gcs
+output_dir: /Users/aleksandra/Desktop/Roadkill_project/vd-biodiversity/training/roadkill/data_handling
+

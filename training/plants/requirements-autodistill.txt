@@ -1,0 +1,8 @@
+trifork-ai-core-tech-stack[training] @ git+https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/trifork/ai-core-tech-stack@33b1378abceb1b9f86bb74d23095fbf1c776bf5a
+autodistill
+autodistill_detic
+autodistill_yolov8
+autodistill_grounded_sam
+autodistill_seggpt
+autodistill_blip
+salesforce-lavis

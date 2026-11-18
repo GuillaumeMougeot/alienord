@@ -1,0 +1,11 @@
+[Unit]
+Description=Bring the GPU clock back under the power-mode cap after video decoding
+After=nvpmodel.service
+
+[Service]
+ExecStart=/opt/apps/gpu-clock-guard/gpu_clock_guard.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

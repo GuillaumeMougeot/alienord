@@ -1,0 +1,10 @@
+
+{
+    "metadata_path": "/VD_Roadkill/detections_statistics/input/meta",
+    "checked_images_csv_path": "/VD_Roadkill/detections_statistics/input/checked_imgs.csv",
+    "animal_confidence_file": "/VD_Roadkill/detections_statistics/results/detections_confidence.txt",
+    "histogram_path": "/VD_Roadkill/detections_statistics/results/histogram_output.jpg",
+    "bucket_name": "data-vd",
+    "gcs_key_filename": "/VD_Roadkill/detections_statistics/input/gcs_key.json"
+}
+

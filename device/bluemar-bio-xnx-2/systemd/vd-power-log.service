@@ -1,0 +1,11 @@
+[Unit]
+Description=Log Jetson input power for crash diagnosis
+After=local-fs.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/apps/power-log/power_log.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

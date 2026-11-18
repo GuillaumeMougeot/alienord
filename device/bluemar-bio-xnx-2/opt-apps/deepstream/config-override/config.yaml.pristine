@@ -1,0 +1,128 @@
+device: 
+  DEVICE_ID: '' # Fill in dinamically
+  COUNTRY: '' # Fill in dinamically
+  PATH_TO_DEVICE_CONFIG: /opt/apps/deepstream/devices
+
+PIPELINE: 'controller'
+
+sink: 
+  FAKESINK: True
+  ONSCREEN: False
+  OUTPUT_FILE: data/video-output.mp4  
+  OVERLAY: False
+
+source: 
+  FAKESRC: False
+  CAMERA_ON: True # NOTE: We need to change it to True in production
+  cameras: 
+    - name: '' # Fill in dinamically
+      description: "REAR_CAMERA"
+      features:
+        Width: 1920 
+        Height: 1200 
+        AcquisitionFrameRate: 2.00 
+        PixelFormat: "BayerRG8" 
+        AcquisitionFrameRateMode: "On" 
+        ExposureAuto: "Continuous"
+        AutoExposureTimeMax: 1000
+        AutoExposureTimeMin: 50 
+        GainAuto: "Continuous" 
+        AutoGainMax: 24.00 
+        BalanceWhiteAuto: "Continuous"
+
+    - name: '' # Fill in dinamically
+      description: "SIDE_CAMERA"
+      features:
+        Width: 1920
+        Height: 1200 
+        AcquisitionFrameRate: 5.00 
+        PixelFormat: "BayerRG8" 
+        AcquisitionFrameRateMode: "On" 
+        ExposureAuto: "Continuous"
+        AutoExposureTimeMax: 200
+        AutoExposureTimeMin: 50 
+        GainAuto: "Continuous" 
+        AutoGainMax: 24.00 
+        BalanceWhiteAuto: "Continuous"
+
+  files: 
+    - file:///media/videos/roadkill-video-10fps.mp4
+
+muxer: 
+  WIDTH: 1920
+  HEIGHT: 1080
+  FRAME_RATE: 20
+  BATCHED_PUSH_TIMEOUT_USEC: 4000000
+
+infer: 
+  # inference plugins
+  roadkill: 
+    # detector model for roadkill
+    CONFIG: 'configs/pgie_roadkill.txt'
+    LABELS: 'configs/labels_roadkill.txt'
+    GIE_UNIQUE_ID: 1 # <- linked property: it is updated bi-directionally with pgie_roadkill.txt gie-unique-id property
+    VERSION: '' # Fill in dinamically with values from model lock
+  
+  car: 
+    # detector model for cars and vehicles
+    CONFIG: 'configs/pgie_car.txt'
+    LABELS: 'configs/labels_car.txt'
+    GIE_UNIQUE_ID: 2 # <- linked property: it is updated bi-directionally with pgie_car.txt gie-unique-id property
+    VERSION: '' # Fill in dinamically with values from model lock
+  
+  plant:
+    CONFIG: 'configs/pgie_plant.txt' # This field needs to be updated once we have the plant model
+    LABELS: 'configs/labels_plant.txt' # This field needs to be updated once we have the plant model
+    GIE_UNIQUE_ID: 3 # <- linked property: it is updated bi-directionally with pgie_plant.txt gie-unique-id property
+    VERSION: '' # Fill in dinamically with values from model lock
+
+tracker: 
+  CONFIG: 'configs/tracker.txt'
+
+# analytics: 
+#   configs:
+#     - 'configs/analytics1.txt'
+
+tiler:
+  WIDTH: 960
+  HEIGHT: 608
+
+## GPS
+gps:
+  GPS_DATA_PATH: '/var/shared/gps-data.json'
+  GPS_SPEED_THRESHOLD : 80 #KMh
+
+images:
+  SAVE_IMAGES: True
+  BLOCK_IMAGE_MEAN_THRESHOLD_MIN: 100
+  BLOCK_IMAGE_MEAN_THRESHOLD_MAX: 200
+  PATH: '/media/data'
+  IMAGES_OUTPUT_PATH: 'images'
+  IMAGES_METADATA_OUTPUT_PATH: 'meta'
+  EXCLUSION_ZONE_THRESHOLD: 0.2
+
+recordings:
+  RECORDING_SECONDS: 5
+  RECORDING_PATH: 'recordings'
+
+annotations:
+  VERSION: '1.0'
+  FORMATED_UTC_TIMESTAMP: '%Y%m%dT%H%M%S.%f'
+
+statistics:
+  ENABLED: False
+  PATH: '/var/shared/statistics.txt'
+
+heartbeat:
+  SECONDS: 10 # Has to be less than half of the "checking" time seconds of the heartbeat checker of the monitoring app (it'll be in core)
+  SINK: '/var/shared/heartbeat/deepstream.txt'
+
+pid:
+  PATH: '/var/shared/pid/deepstream.pid'
+
+logs:
+  ENABLED: True
+  LOG_LEVEL: 'DEBUG'
+  LOG_FILE: '/var/shared/logs/deepstream.txt'
+  VERBOSE_DUMPDATA_LOG: True
+  LOG_SLOW_WAIT_FRAMES: 150

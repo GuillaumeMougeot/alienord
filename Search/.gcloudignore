@@ -1,0 +1,15 @@
+# Byte-compiled
+/**/__pycache__/**
+
+# Environments
+venv/**
+
+# Files and folders
+.gcloudignore
+.gitignore
+Makefile
+cloud-functions/**
+data/**
+secrets/**
+tests/**
+README.md

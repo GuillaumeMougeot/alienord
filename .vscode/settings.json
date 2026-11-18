@@ -1,0 +1,32 @@
+{
+    "python.analysis.exclude": [
+        "bio/data",
+        "dependencies",
+        "dockerfiles",
+        "models"
+    ],
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "bio/configs/.*\\.yaml",
+                "isAsync": true,
+                "cmd": "cd bio && make gen-schemas"
+            },
+            {
+                "match": "bio/configs/(config\\.yaml|(pgie|sgie).*\\.txt)",
+                "isAsync": true,
+                "cmd": "[ ${workspaceFolder}/${relativeFile} = ${file} ] && echo ${relativeFile} changed && cd bio && python3 -m utils.update_infer_config ${file}"
+            },
+            {
+                "match": "gps/configs/.*\\.yaml",
+                "isAsync": true,
+                "cmd": "cd gps && make gen-schemas"
+            },
+            {
+                "match": "gcs/configs/.*\\.yaml",
+                "isAsync": true,
+                "cmd": "cd gcs && make gen-schemas"
+            }
+        ]
+    }
+}

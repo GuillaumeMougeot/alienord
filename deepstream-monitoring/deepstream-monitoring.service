@@ -1,0 +1,18 @@
+[Unit]
+Description=Deepstream monitoring application
+After=updates.service
+After=network.target
+Requires=deepstream.service
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=monitoring
+WorkingDirectory=/opt/apps/deepstream-monitoring
+ExecStart=/bin/bash -c 'bash /opt/apps/deepstream-monitoring/launch.sh'
+
+[Install]
+WantedBy=multi-user.target

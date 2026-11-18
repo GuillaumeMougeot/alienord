@@ -1,0 +1,15 @@
+services:
+  gcs:
+    image: europe-west1-docker.pkg.dev/nordfou-biodiversity/docker-registry-bio/gcs:base
+    network_mode: "host"
+    container_name: gcs
+    user: "${USER_ID}:${GROUP_ID}"
+    environment:
+      - ENV=test
+      - DEVICE_ID=${DEVICE_ID}
+    volumes:
+      - /var/shared:/var/shared
+      - /media/data:/media/data
+      - /var/secrets:/var/secrets
+      - /opt/apps/gcs/app-override:/workspaces/gcs/app:ro
+      - /opt/apps/gcs/control:/workspaces/gcs/control:ro

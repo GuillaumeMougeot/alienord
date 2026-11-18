@@ -1,0 +1,13 @@
+
+gps:
+  GPS_DATA_PATH: '/var/shared/gps-data.json'
+  GPS_GLOB_PATH : '/dev/ttyUSB*'
+
+
+heartbeat:
+  SINK: '/var/shared/heartbeat/gps.txt'
+
+logs:
+  ENABLED: True
+  LOG_LEVEL: 'DEBUG'
+  LOG_FILE: '/var/shared/logs/gps.txt'

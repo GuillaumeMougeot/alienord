@@ -1,0 +1,8 @@
+gps:
+  GPS_DATA_PATH: 'data/gps-data.json'
+
+logs:
+  LOG_FILE: 'data/gps.txt'
+
+heartbeat:
+  SINK: 'data/heartbeat.txt'

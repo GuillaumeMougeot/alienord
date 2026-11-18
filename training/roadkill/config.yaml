@@ -1,0 +1,23 @@
+names:
+  - dead_animal
+  - car_element
+  - sewage
+  - shadow
+  - road_marking
+  - wheel
+  - grass
+  - obstruction
+  - road
+  - road_object
+
+thresholds:
+  - 0.1
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3

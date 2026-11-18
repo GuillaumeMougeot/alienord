@@ -1,0 +1,23 @@
+
+services:
+  deepstream:
+    image: europe-west1-docker.pkg.dev/nordfou-biodiversity/docker-registry-bio/deepstream-l4t:base
+    container_name: deepstream_app
+    network_mode: "host"
+    runtime: nvidia
+    user: "${USER_ID}:${GROUP_ID}"
+    group_add:
+      - audio
+      - video
+      - i2c
+      - dialout
+    environment:
+      - GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu
+      - ENV=test
+      - DEVICE_ID=${DEVICE_ID}
+    volumes:
+      - /var/shared:/var/shared
+      - /media:/media
+      - /opt/apps/deepstream/devices:/opt/apps/deepstream/devices
+      - /media/data/models:/workspaces/vd-biodiversity/bio/models
+      - /opt/apps/deepstream/config-override/config.yaml:/workspaces/vd-biodiversity/bio/configs/config.yaml:ro

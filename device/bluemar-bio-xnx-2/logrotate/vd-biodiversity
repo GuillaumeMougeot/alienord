@@ -1,0 +1,14 @@
+# VD Biodiversity application logs (deepstream, gps, gcs), written by the containers.
+# copytruncate: the apps keep these files open, so they are copied then truncated in
+# place instead of being moved. "su" is required because /var/shared/logs is group-writable.
+/var/shared/logs/*.txt {
+    su root shared
+    daily
+    maxsize 50M
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}

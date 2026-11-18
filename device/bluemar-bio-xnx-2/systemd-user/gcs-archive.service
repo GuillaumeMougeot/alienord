@@ -1,0 +1,12 @@
+[Unit]
+Description=Mirror the project's Google Cloud buckets to /media/data/gcs-archive
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/home/xnx/gcs-archive-job/archive.sh
+Restart=on-failure
+RestartSec=120
+
+[Install]
+WantedBy=default.target

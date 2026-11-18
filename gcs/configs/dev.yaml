@@ -1,0 +1,15 @@
+DEVICE_ID: 'dev_test'
+
+cloud:
+  SECRETS_PATH: 'secrets/nordfou-biodiversity-2cd0fb3af162.json'
+  MINUTES: 1
+
+data:
+  PATH: 'data/data/'
+
+logs:
+  LOG_FILE: 'data/logs.txt'
+
+heartbeat:
+  SECONDS: 10
+  SINK: 'data/heartbeat.txt'

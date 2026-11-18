@@ -1,0 +1,20 @@
+{
+    "roadkill": {
+        "integrity": "sha512-14d228dd5a5ca6fd70a5a5d61bd0368d93e68456dd4f552a18611fa9d2968b8456cfa3770eae2e18a2ea9219593b0785a534ff79e694ae64809744e70af8e21c",
+        "version": "20230829150000_yolov8m_10classes_roadkill",
+        "description": "YOLOv8m object detection model trained on collected data until 20230815 by the previous FasterRCNN model excluding roadkills, including about 1000 roadkill images from public datasets, and 100 roadkill images annotated from the VD Darwin dataset. It detects 10 classes. FP32. Trained with ultralytics 8.0.81.",
+        "resolved": "gs://models-bio/20230920165807_20230829150000_yolov8m_10classes_roadkill.tgz"
+    },
+    "car": {
+        "integrity": "sha512-bd98b12639439dd7fc53dd94da12de864909abe1cd00894bb10af35490a5628ecdecd44aeb0b8e61d6b3ac83669c478db89f08c3ff047a7bb9d19e3fd7686c98",
+        "version": "car_v3",
+        "description": "Resnet10 caffemodel car detector with fixed checksum generation",
+        "resolved": "gs://models-bio/20230802132032_car_v3.tgz"
+    },
+    "plant": {
+        "integrity": "sha512-5234e07acf8404f9b96be5f4748c616275ae0ad136870280af4e0b06bf1426acde92a0607221360fe1760b09f7ec0c195cb704c6697d524920f6fe0bae709390",
+        "version": "20240131_yolov8m-det_100_researcherdata",
+        "description": "trained on 6 plant species + no_plant, medium size model, 100 epochs, default params, used researcher data to train",
+        "resolved": "gs://models-bio/20240205131744_20240131_yolov8m-det_100_researcherdata.tgz"
+    }
+}

@@ -1,0 +1,15 @@
+
+services:
+  gps:
+    image: europe-west1-docker.pkg.dev/nordfou-biodiversity/docker-registry-bio/gps:base
+    container_name: gps
+    network_mode: "host"
+    user: "${USER_ID}:${GROUP_ID}"
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    group_add:
+      - dialout
+    environment:
+      - ENV=test
+    volumes:
+      - /var/shared:/var/shared

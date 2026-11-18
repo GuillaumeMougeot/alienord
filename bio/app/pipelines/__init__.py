@@ -1,0 +1,2 @@
+from .collection import CollectionPipelineFactory
+from .inference import InferencePipelineFactory

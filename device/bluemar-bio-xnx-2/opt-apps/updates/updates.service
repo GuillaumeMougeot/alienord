@@ -1,0 +1,17 @@
+[Unit]
+Description=Update Application that runs on reboot
+StartLimitIntervalSec=10
+StartLimitBurst=3
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+WorkingDirectory=/opt/apps/updates
+ExecStartPre=/usr/bin/sleep 10
+ExecStart=/bin/bash /opt/apps/updates/launch-update.sh
+
+[Install]
+WantedBy=multi-user.target

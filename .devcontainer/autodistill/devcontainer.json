@@ -1,0 +1,37 @@
+{
+    "image": "bio-train:autodistill",
+    "remoteUser": "distiller",
+    "updateRemoteUserUID": true,
+    "overrideCommand": false, // needed to run the ENTRYPOINT defined in the docker
+    "mounts": [
+        // on our laptops
+        "type=bind,source=/home/${localEnv:USER}/.darwin/datasets,target=/workspaces/.darwin/datasets",
+        // on the VM
+        // "type=bind,source=/opt/shared/darwin_datasets,target=/workspaces/.darwin/datasets",
+        // "type=bind,source=/opt/shared/datasets,target=/workspaces/vd-biodiversity/training/datasets"
+    ],
+    "runArgs": [
+        "--rm",
+        "--network=host",
+        "--gpus=all",
+        "--cap-add=SYSLOG",
+        "--shm-size=10G",
+        "-e",
+        "DISPLAY=${localEnv:DISPLAY}",
+        "-e",
+        "CUDA_CACHE_DISABLE=0",
+        "-e",
+        "CUDA_VISIBLE_DEVICES=0",
+        "-e",
+        "__NV_PRIME_RENDER_OFFLOAD=1",
+        "-e",
+        "CUDA_MODULE_LOADING=LAZY",
+        "-e",
+        "PYTHONPATH=training/autodistill"
+    ],
+    "extensions": [
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "eamodio.gitlens"
+    ]
+}

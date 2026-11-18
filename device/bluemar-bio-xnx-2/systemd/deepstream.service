@@ -1,0 +1,21 @@
+
+[Unit]
+Description=Deepstream application
+StartLimitIntervalSec=10
+StartLimitBurst=3
+After=updates.service
+After=gps.service
+Requires=camera.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=app
+WorkingDirectory=/opt/apps/deepstream
+EnvironmentFile=-/opt/apps/deepstream/.env
+ExecStartPre=/bin/bash -c 'echo -e "USER_ID=$(id -u app)\nGROUP_ID=$(id -g app)" > /opt/apps/deepstream/.env'
+ExecStart=/opt/apps/deepstream/launch-deepstream-l4t.sh
+
+[Install]
+WantedBy=multi-user.target

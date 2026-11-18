@@ -1,0 +1,9 @@
+# Buckets to mirror into /media/data/gcs-archive/<bucket>/, one per line, in order.
+# Total ~460 GB (2026-11-16). Delete a line to skip a bucket.
+data-biodiversity
+data-roadkill
+data-bio
+models-bio
+vd-website
+artifacts-bio
+gcf-v2-sources-1082176216244-europe-west1
