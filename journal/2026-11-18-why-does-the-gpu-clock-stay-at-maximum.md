@@ -106,5 +106,39 @@ one real Firefox start.
   video player on the unit is fine again ([operations](../docs/operations.md)).
 - Anything that uses the hardware decoder triggers it, including a future pipeline that processes
   video files: keep the guard running.
-- Not explained: *which* driver path sets the clock (decoder teardown and GL start-up both do). The
-  guard does not need to know.
+- The guard is a workaround for a driver bug; the root cause is below.
+
+## Root cause: a bug in NVIDIA's GPU driver, fixed in L4T 35.2.1
+
+The owner rightly asked whether this was a real bug rather than something to work around. A kernel
+trace (`/tmp/gpu-trace.sh`, run by the owner 17:2x: `clk_set_rate` events on `gpcclk` with call
+stacks, during one probe) caught the single write that sets 1109 MHz:
+
+```
+nvgpu_clk_arb_p  clk_set_rate: gpcclk 1109250000
+ => clk_set_rate <= nvgpu_linux_clk_set_rate <= gp10b_clk_arb_run_arbiter_cb
+ <= nvgpu_clk_arb_worker_poll_wakeup_process_item <= nvgpu_worker_poll_work
+```
+
+That is the **clock arbiter** of the GPU driver `nvgpu` (`common/clk_arb/clk_arb_gp10b.c`), not the
+frequency governor (`devfreq_monitor` kept reporting 510 MHz throughout). Programs that open the GPU
+through NVIDIA's libraries register a clock "session" with the arbiter; when a session comes or goes
+(the decoder shutting down, Firefox probing OpenGL) the arbiter re-runs. With no session asking for
+a frequency, the L4T 35.1 code falls back to `gpc2clk_default_mhz`, the hardware default (maximum),
+clamps it only to the hardware range, and calls `set_rate` directly: **it ignores the power mode's
+cap**, and the governor never learns of the change.
+
+NVIDIA's public source (mirror `github.com/OE4T/linux-nvgpu`, tags `jetson_35.*`) shows the fix:
+from **`jetson_35.2.1`** on, the arbiter clamps its target with `gk20a_scale_clamp_clk_target()` (the
+governor's min/max) and records the rate in `g->last_freq`. `jetson_35.1` lacks both; 35.2.1, 35.3.1,
+35.4.1, 35.5 and 35.6.4 have them. This unit runs **L4T 35.1.0** (Lenovo SE70 image
+`R35.1.0-0.0.1`, `/etc/se70ota_release`), the first JetPack 5 release.
+
+Real fixes, in order of size:
+
+1. **Rebuild `nvgpu.ko` for 35.1 with that ~10-line backport.** The kernel headers are installed
+   (`nvidia-l4t-kernel-headers 35.1.0`). Risk: a bad module means no GPU, so no recording, until
+   the original is put back; keep it beside the new one and have console access.
+2. **Move to L4T ≥ 35.2.1** (JetPack 5.1): also what DeepStream 6.2 officially requires. On this
+   board that has to come from Lenovo's SE70 images, which need checking, and it is a reflash.
+3. **Keep the guard** (now): it undoes the same wrong write within ~10 s.
