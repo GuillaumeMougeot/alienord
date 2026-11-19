@@ -33,4 +33,4 @@ You do not read the journal front to back: start from [`../FINDINGS.md`](../FIND
 | [11-18](2026-11-18-capping-the-container-logs.md) | Can the containers' logs be capped? | change | Yes: 3 × 10 MB each |
 | [11-18](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) | Why does the power stay high after the video player is closed? | incident | GPU clock stuck at max; guard resets it in ~10 s |
 | [11-18](2026-11-18-publishing-the-repository.md) | Can the knowledge base go public? | change | Yes: alienord, fresh history; some things held back |
-| [11-19](2026-11-19-can-the-gpu-driver-be-fixed.md) | **Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?** | change | **OPEN**: built and verified; live test next |
+| [11-19](2026-11-19-can-the-gpu-driver-be-fixed.md) | **Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?** | change | **OPEN**: built; live test crashed the kernel; next test waiting on owner |

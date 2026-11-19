@@ -1,6 +1,6 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN: built and verified 11-19; live test next (owner). Owner chose
+**Kind:** change · **Status:** OPEN: built 11-19; **live test crashed the kernel (14:14)**; cause undetermined (fix vs. reloading the driver at run time); next test waiting on the owner. Owner chose
 option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
@@ -133,6 +133,41 @@ our mistake. The original driver was never unloaded (still loaded, nothing using
 was left with a black screen on Ctrl+Alt+F1 and all services stopped; restored with
 `/tmp/gpu-test-restore.sh`. The script now re-launches itself under `systemd-run`, outside any
 login session, and the owner follows the log.
+
+## Live test, second attempt (11-19, 14:14): kernel crash, unit reset itself
+
+The script (now under `systemd-run`) ran to plan: services stopped, nobody using the GPU, original
+unloaded at 14:14:49, **fixed driver loaded**, power mode re-applied (cap 510 MHz, mask 4,
+`gk20a_scale_init: enabled scaling for GPU`), services restarted at 14:14:53. One second later, as
+the desktop's X server opened the GPU (14:14:54):
+
+```
+nvgpu:                   nvgpu_kfree_impl:151  [DBG]  kfree: addr=0x00000000b684c9e7
+Unable to handle kernel paging request at virtual address 000000fc02fad348
+Mem abort info: ESR = 0x96000004, EC = 0x25: DABT (current EL)
+```
+
+The rest of the report never reached the disk: this kernel has `panic_on_oops=1` and `panic=0`, so
+the oops became a panic and the kernel stopped. The screen went black and Ctrl+Alt+F3 did nothing.
+The owner typed `sudo reboot` blind; **what actually restarted the unit was the hardware watchdog**
+(`tegra-pmc: PMC reset source: BCCPLEXWDT`, new boot 14:19:22, ~4.5 min later). It came back on the
+original driver, recording normally. Nothing had been written to disk. Good to know beyond this test:
+**a kernel crash on this unit resets it by itself within a few minutes.**
+
+What the two lines say: that debug line is printed only if the GPU structure passed to `nvgpu_kfree`
+has the memory-debug bit set in its log mask, and the empty device name means its device pointer
+is NULL. A live driver has neither, so the driver freed memory through a **stale or garbage pointer**
+(use after free). Two candidates, which the lost call trace would have separated:
+
+1. **Our patch** (new QoS notifiers and clamp in the clock arbiter, whose session is created exactly
+   when a program like X opens the GPU);
+2. **Reloading `nvgpu` at run time**, which Jetson systems never do in normal use (the driver loads
+   once at boot). Something left over from the unloaded driver (seven minutes earlier its channel
+   teardown already logged `unbind common failed`) can point into freed memory.
+
+Why the record is lost: the crash-record store (`ramoops`, a reserved RAM area kept across resets)
+exists on this unit but its module is not loaded, so `/sys/fs/pstore` is empty. Any further test
+should load it first (`modprobe ramoops`) and set `kernel.panic=10` so the reset comes in 10 s.
 
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)

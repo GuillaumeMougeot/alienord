@@ -4,8 +4,10 @@
 command is spelled out. Why we do this and how the risk was weighed:
 [journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
 
-**Status (2026-11-19, 10:00):** built and verified (`tools/nvgpu-fix/`); live test (step 2) next.
-Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
+**Status (2026-11-19, 14:30):** built (`tools/nvgpu-fix/`); the live test (step 2) **crashed the
+kernel** at 14:14 when the desktop opened the GPU; the hardware watchdog reset the unit ~4.5 min later
+and it came back on the original driver ([journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md)).
+Do not re-run step 2 as is. Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
 recovery below is needed.
 
 ## What changes
@@ -86,7 +88,7 @@ cat /sys/devices/17000000.gv11b/devfreq/17000000.gv11b/cur_freq   # GPU present:
 | case | what you see | what you do |
 |---|---|---|
 | **A. live test: fixed module refused** | the script says the load failed; no GPU | `sudo modprobe nvgpu` (reloads the original), then `sudo systemctl start gdm`; recording restarts by itself within a minute. Or just `sudo reboot`. Nothing was written to disk. |
-| **B. live test: freeze or kernel crash** | screen frozen, or the unit reboots | reboot; hold the power button ~10 s if frozen. Nothing was written to disk; the original loads. |
+| **B. live test: freeze or kernel crash** | screen black, keyboard dead | wait: a kernel crash halts the kernel and the hardware watchdog resets the unit by itself (~4-5 min, seen 11-19). Or hold the power button ~10 s. Nothing was written to disk; the original loads. |
 | **C. installed: works but misbehaves** | errors, odd clocks, recording problems | the revert command, whenever convenient. |
 | **D. installed: refused at boot** | unit boots, no desktop or a broken one, no recording | `Ctrl+Alt+F3`, log in as `xnx` (or SSH in), the revert command. |
 | **E. installed: crashes at every boot** | unit reboots in a loop, or hangs during start-up | power on and watch the screen: the boot menu titled **"L4T boot options"** lists the entries; pick **"no GPU driver"** (by its number, or arrow keys and Enter). The unit starts without the GPU driver: `Ctrl+Alt+F3`, log in, the revert command, which reboots normally. |
