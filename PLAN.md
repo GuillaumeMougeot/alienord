@@ -1,6 +1,6 @@
 # PLAN: what we are doing now
 
-**Kind:** living · **Last updated:** 2026-11-18 (evening)
+**Kind:** living · **Last updated:** 2026-11-19
 
 The one file about *today*. Reasons are in the linked journal entries.
 
@@ -17,7 +17,7 @@ fixes the clock within ~10 s, so the unit should stay at ~12-14 W.
 | 2 | find the extra load | **done 11-18**: stuck GPU clock; guard installed |
 | 3 | run normally, desktop use allowed, logger running; any reset → read `/var/log/vd-power/` and `journalctl -u gpu-clock-guard` | **watching** |
 | 4 | a supply with headroom anyway (summer heat in a vehicle) | when convenient |
-| 5 | fix the driver bug itself: backported `nvgpu.ko`, or L4T ≥ 35.2.1 via Lenovo ([options](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)) | **owner to choose**; guard meanwhile |
+| 5 | fix the driver bug itself: rebuilt `nvgpu.ko` with NVIDIA's 35.2.1 fix (owner's choice 11-19; [plan and risks](journal/2026-11-19-can-the-gpu-driver-be-fixed.md)) | **build next**, then live test, then install; guard meanwhile |
 
 ## 1. Waiting on the owner
 
