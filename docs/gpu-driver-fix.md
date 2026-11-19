@@ -8,7 +8,9 @@ command is spelled out. Why we do this and how the risk was weighed:
 kernel** at 14:14 when the desktop opened the GPU; the hardware watchdog reset the unit ~4.5 min later
 and it came back on the original driver ([journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md)).
 Reloading the **original** driver the same way also crashes (14:34): step 2's method is unusable on this
-system; do not re-run it. A one-boot trial replaces it (proposed, see the journal). Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
+system; do not re-run it. A one-boot trial replaces it: `sudo bash /home/xnx/gpu-test/install-one-boot-trial.sh` (files in
+`tools/nvgpu-fix/trial/`); undo with `sudo bash /home/xnx/gpu-test/remove-one-boot-trial.sh`, or by hand:
+`sudo rm /etc/modprobe.d/nvgpu-fix-trial.conf /usr/local/sbin/nvgpu-trial-load && sync`. Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
 recovery below is needed.
 
 ## What changes

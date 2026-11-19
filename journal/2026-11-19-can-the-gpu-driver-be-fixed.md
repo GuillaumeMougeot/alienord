@@ -205,6 +205,33 @@ firmware may check a signature, so editing it is a risk of its own), a **one-boo
 Undo: delete the two files. Worst case, a broken script means no GPU driver at boot (system and
 network up): delete the modprobe file from a console or SSH and reboot.
 
+### One-boot trial: prepared (11-19, owner said yes)
+
+Files in [`tools/nvgpu-fix/trial/`](../tools/nvgpu-fix/trial/), staged in `/home/xnx/gpu-test/`
+(not `/tmp`, which is wiped at boot). Owner runs `sudo bash /home/xnx/gpu-test/install-one-boot-trial.sh`:
+it checks the checksums of the three reviewed files, installs them root-owned, checks that
+`modprobe` sees the rule, then asks before arming the flag and rebooting.
+
+Facts it relies on: `nvgpu` loads at ~6 s from `systemd-modules-load` (`/etc/modules-load.d/nv.conf`),
+after the NVMe root is mounted (4.6 s) and remounted read-write (5.8 s), but nothing orders the
+two, so the loader **refuses the fixed driver if it cannot delete the flag** (otherwise a
+read-only root would mean the fixed driver at every boot). `nvgpu` depends only on `nvmap`,
+takes no options, and nothing depends on it. `modprobe -C` (dry run, no root) parses the rule as
+`install nvgpu /usr/local/sbin/nvgpu-trial-load` and resolves the original's `nvmap` dependency.
+
+The loader was run under `dash` in a sandbox with stand-ins for `modprobe`, `insmod` and the
+`/proc` files, through seven cases:
+
+| case | result |
+|---|---|
+| normal boot, no flag | `modprobe --ignore-install nvgpu` (original), panic setting untouched |
+| driver already loaded | does nothing, leaves the flag |
+| trial boot | flag deleted, `kernel.panic=10`, `modprobe nvmap`, `insmod` fixed, kernel-log line, `trial.log` line |
+| fixed module wrong or missing | flag deleted, original |
+| flag cannot be deleted | flag left, **original**, panic untouched |
+| fixed module refused | flag deleted, original |
+| original fails to load | its exit code is passed back |
+
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
 right after loading, before anything uses the GPU, which also sets mode 5's TPC power-gating mask.
