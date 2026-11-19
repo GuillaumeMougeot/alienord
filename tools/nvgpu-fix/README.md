@@ -82,3 +82,7 @@ After the 11-19 14:14 crash (option A, owner's choice): `gpu-driver-reload-origi
 reloads the **original** driver the same way, with crash capture on (`ramoops`, `kernel.panic=10`),
 to learn whether a run-time reload alone crashes the kernel. `read-crash-record.sh` copies the saved
 record after a crash reset. Both are run from `/home/xnx/gpu-test/` (`/tmp` is wiped at boot).
+
+`trial/`: the one-boot trial (11-19, passed). `perm/`: the permanent setup, fixed driver by default
+with automatic fallback to the original; how it works and how to undo it:
+[runbook](../../docs/gpu-driver-fix.md).

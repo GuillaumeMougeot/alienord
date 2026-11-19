@@ -1,6 +1,6 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN: **the fix works.** One-boot trial 11-19 14:49: the fixed driver loaded at boot, recording normal, and the decoder probe that used to stick the clock at 1109 MHz left it at 510 MHz (150/150 samples, guard idle). (The two earlier crashes came from reloading the driver at run time, which crashes even the original.) Not permanent yet: the next boot loads the original. Owner chose
+**Kind:** change · **Status:** OPEN: **the fix works.** One-boot trial 11-19 14:49: the fixed driver loaded at boot, recording normal, and the decoder probe that used to stick the clock at 1109 MHz left it at 510 MHz (150/150 samples, guard idle). (The two earlier crashes came from reloading the driver at run time, which crashes even the original.) Firefox 14:55 also left it alone. Permanent setup with automatic fallback prepared, waiting for the owner to install it. Owner chose
 option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
@@ -250,6 +250,31 @@ software reset, `MAINSWRST`, as `systemctl reboot` does). Boot `f9a802f4`, as `x
 
 Trial files mirrored in `device/bluemar-bio-xnx-2/nvgpu-fix-trial/`. Still to do: Firefox (the
 other trigger); then the owner decides how to make it permanent.
+
+### Firefox (14:55) and the permanent setup (prepared 11-19, owner said "prepare the permanent fix")
+
+The owner started Firefox at 14:55 on the fixed driver: normal, and `gpu-clock-guard` logged
+nothing (on 11-18 a Firefox start stuck the clock within 2 s). Both known triggers are gone.
+
+Permanent setup ([`tools/nvgpu-fix/perm/`](../tools/nvgpu-fix/perm/), runbook
+[docs/gpu-driver-fix.md](../docs/gpu-driver-fix.md)): the same modprobe-rule idea, but the fixed
+driver is the default and a crash switches it off by itself. Instead of a "stable after N
+minutes" timer, it uses the reset reason the PMC records at every boot
+(`/sys/devices/platform/c360000.pmc/reset_reason`). The journal's 13 boots show the three kinds
+apart: `SYS_RESET_N` for every supply cut-out, `MAINSWRST` for reboots and for the 14:34 crash
+with `kernel.panic=10`, `BCCPLEXWDT` for the 14:14 hang. The loader writes `pending` before
+loading the fixed driver; a service removes it at every clean shutdown. A boot that finds
+`pending` after a power cut carries on; after anything else, it writes `disabled` and loads the
+original until someone looks. Any crash with the fixed driver, not just one at boot, switches it
+off, since the original never crashed in months of running.
+
+Sandbox (`dash`, stand-ins for `modprobe`, `insmod`, `/proc` and the reset reason), 12 cases, all
+as intended: first boot (fixed, `pending`, panic 10); disabled by hand (original); `pending` +
+`SYS_RESET_N` (fixed); `pending` + `MAINSWRST` / `BCCPLEXWDT` / unreadable reason (`disabled`
+written, original); wrong module (original); read-only state (original); fixed refused (original,
+panic setting restored: added after the first run); clean-shutdown `clear`; already loaded
+(nothing); a later boot after auto-disable (original). `systemd-analyze verify` on the service:
+no complaint; `modprobe -C` parses the rule.
 
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
