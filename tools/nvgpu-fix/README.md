@@ -84,5 +84,7 @@ to learn whether a run-time reload alone crashes the kernel. `read-crash-record.
 record after a crash reset. Both are run from `/home/xnx/gpu-test/` (`/tmp` is wiped at boot).
 
 `trial/`: the one-boot trial (11-19, passed). `perm/`: the permanent setup, fixed driver by default
-with automatic fallback to the original; how it works and how to undo it:
-[runbook](../../docs/gpu-driver-fix.md).
+with automatic fallback to the original, including the built `nvgpu-fixed.ko` (sha256 `761608e8…f3ec`)
+and `install-nvgpu-fix.sh` / `remove-nvgpu-fix.sh`, which work from any clone. `check-same-unit.sh`:
+is this unit identical to the one the module was built for (no root). How it works, how to install
+on another unit, how to undo: [runbook](../../docs/gpu-driver-fix.md).

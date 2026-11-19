@@ -3,7 +3,7 @@
 **Read this from another device if the unit will not start.** Every command is spelled out. Why
 and how it was tested: [journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
 
-**Status (2026-11-19, 15:20):** installed and running (the decoder probe and Firefox leave the GPU
+**Status (2026-11-19, 15:35):** installed and running (the decoder probe and Firefox leave the GPU
 clock at the 510 MHz cap). To watch: the first reboot with it hung at the very end and was finished by
 the watchdog (~3 min); see the journal.
 
@@ -46,6 +46,27 @@ the NVMe root is mounted, not from the initrd: the bootloader, kernel and initrd
 So a fixed driver that crashes costs **one** crash: the unit resets itself and the next boot is on
 the original. No menu, no console needed.
 
+## Installing on another unit
+
+Only on a Lenovo SE70 identical to bluemar-bio-xnx-2 (same Lenovo image `R35.1.0-0.0.1`, same
+kernel build). From a clone of this repository (as any user with sudo), in a terminal that will not
+be closed:
+
+```bash
+git clone https://github.com/GuillaumeMougeot/alienord.git ~/alienord && sudo bash ~/alienord/tools/nvgpu-fix/perm/install-nvgpu-fix.sh
+```
+
+The installer first runs [`tools/nvgpu-fix/check-same-unit.sh`](../tools/nvgpu-fix/check-same-unit.sh)
+(no root needed; run it alone to just check): model, running kernel, kernel configuration, L4T
+and Lenovo release, `/boot/Image`, the original `nvgpu.ko` and `nvmap.ko`, by checksum. Any
+difference: nothing is installed. Then it checks the files' checksums, installs them, and offers a
+reboot; the fixed driver loads from that boot on. A unit that slips past the check with a different
+kernel is still safe: the kernel refuses the module and the loader loads the original.
+
+After the reboot: `cat /sys/module/nvgpu/taint` shows `O`; `tail -2 /var/lib/nvgpu-fix/boot.log`
+says `loaded the FIXED driver`. The guard (`gpu-clock-guard.service`) is not part of this
+installer; with the fix it has nothing to do.
+
 ## Checking
 
 ```bash
@@ -61,7 +82,7 @@ journalctl -u gpu-clock-guard -b       # should show only "Started": the guard n
 |---|---|
 | **you want the original for a while** | `sudo touch /var/lib/nvgpu-fix/disabled && sync && sudo reboot`. Back to the fix: `sudo rm /var/lib/nvgpu-fix/disabled && sync && sudo reboot` |
 | **the loader disabled the fix by itself** | read `/var/lib/nvgpu-fix/disabled` and the kernel log of the boot before (`journalctl -b -1 -k`); the unit is on the original and fine. Retry only after looking at why |
-| **remove everything** | `sudo bash /home/xnx/gpu-test/remove-nvgpu-fix.sh`, then reboot. By hand: `sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot` (the rest is then inert) |
+| **remove everything** | from the repository: `sudo bash tools/nvgpu-fix/perm/remove-nvgpu-fix.sh`, then reboot. By hand: `sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot` (the rest is then inert) |
 | **unit up, but no GPU driver at all** (no desktop, no recording: a broken loader) | `Ctrl+Alt+F3` or SSH, log in, `sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot` |
 | **crash, black screen** | wait: the unit resets itself (10 s with the fixed driver, ~4-5 min via the watchdog otherwise), and after a crash the loader switches to the original |
 | **none of that works** | take the NVMe out (below) |

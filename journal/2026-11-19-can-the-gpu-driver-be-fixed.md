@@ -298,6 +298,15 @@ minutes longer and is finished by the watchdog; nothing is lost, the loader is n
 mark is removed before the hang), and a field unit is normally switched off by its power, not
 rebooted. Next: one more reboot by the owner, then read `reset_reason`.
 
+### For a second, identical unit (11-19, owner asked)
+
+The owner has a second unit to fix. The installer now works from any clone of the repository:
+the built module is committed (`tools/nvgpu-fix/perm/nvgpu-fixed.ko`, 4.4 MB) and
+`tools/nvgpu-fix/check-same-unit.sh` (no root) compares model, `/proc/version`, kernel config,
+L4T and Lenovo release, `/boot/Image`, the original `nvgpu.ko` and `nvmap.ko` with this unit's
+values before anything is installed (this unit: SAME). The plain-language summary for reporting is
+[reports/2026-11-19-gpu-power-issue.md](../reports/2026-11-19-gpu-power-issue.md).
+
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
 right after loading, before anything uses the GPU, which also sets mode 5's TPC power-gating mask.
