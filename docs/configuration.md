@@ -72,6 +72,9 @@ That freezes motion at 100 km/h in daylight, and indoors produces near-black fra
 gain cannot rescue. For indoor tests, raise `AutoExposureTimeMax` (Tier B, both cameras): 40000
 (40 ms) or 100000 (100 ms). Revert before driving: at 80 km/h, every 10 ms is ~22 cm of motion blur.
 
-**Currently applied (2026-11-17):** 100 ms on both cameras through `config-override/config.yaml`;
-66.8/255 under a table indoors (40 ms gave 30/255). Edit that file in place, not with `sed -i`: the
-container mounts this single file, and a replaced file is not seen until the container is recreated. Undo: [`reverting.md`](reverting.md#indoor-camera-exposure-2026-11-17).
+**Currently applied (2026-11-19, 15:53): production**, the image's own values (rear 1 ms, side
+0.2 ms); the override is not mounted. Test mode (`bash tools/unit-mode.sh test`) mounts
+`config-override/config.yaml`: 100 ms on both cameras, 66.8/255 under a table indoors (40 ms gave
+30/255). Edit that file in place, not with `sed -i`: the container mounts this single file, and a
+replaced file is not seen until the container is recreated. Switching modes:
+[operations](operations.md#test-or-production-ready-to-drive).

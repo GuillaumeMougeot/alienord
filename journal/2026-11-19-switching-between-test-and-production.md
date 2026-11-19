@@ -1,6 +1,6 @@
 # Can the unit be switched between test and production with one command?
 
-**Kind:** change · **Status:** OPEN: `tools/unit-mode.sh` written and checked read-only; the live switch (restarts recording) waits for the owner's go.
+**Kind:** change · **Status:** RESOLVED: yes, `bash tools/unit-mode.sh production|test` (status without argument). Unit switched to production 11-19 15:53 at the owner's request; READY FOR PRODUCTION (warnings: no GPS fix indoors, uploads off).
 
 ## The question
 
@@ -44,3 +44,12 @@ override mounted) and NOT READY for that one reason. A first version misread the
 after the colon. Both compose edits, run on a copy: `production` removes exactly the one line;
 `test` then restores the file exactly (apart from a final newline the original lacks); both parse
 as YAML. Not yet run for real: the switch itself, which restarts recording once.
+
+## Switched to production (11-19, 15:52, owner: "run unit-mode.sh production now")
+
+`bash tools/unit-mode.sh production`: the mount line removed (the only difference from
+`docker-compose.yaml.before-unit-mode`), app signalled, new container `f4e41fd5e8d2`, new
+`Running...` at 14:53:33 UTC, then frames. The app now reads `AutoExposureTimeMax` 1000 (rear) and
+200 (side). First frame-rate line 1.20 / 1.20 (the average just after start), then 1.40 / 1.40.
+Status: READY FOR PRODUCTION, two warnings (GPS no fix indoors; uploads off). Compose file mirrored
+in `device/`.

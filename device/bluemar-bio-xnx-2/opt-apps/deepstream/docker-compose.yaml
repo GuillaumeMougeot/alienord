@@ -25,4 +25,3 @@ services:
       - /media:/media
       - /opt/apps/deepstream/devices:/opt/apps/deepstream/devices
       - /media/data/models:/workspaces/vd-biodiversity/bio/models
-      - /opt/apps/deepstream/config-override/config.yaml:/workspaces/vd-biodiversity/bio/configs/config.yaml:ro

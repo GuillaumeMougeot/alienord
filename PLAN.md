@@ -33,7 +33,6 @@ with a fresh history; the private one keeps Trifork's history unchanged; no key-
 ## 2. Ready to do, when wanted
 
 - Second unit: GPU fix with `tools/nvgpu-fix/perm/install-nvgpu-fix.sh` (checks it is identical first; [runbook](docs/gpu-driver-fix.md#installing-on-another-unit)).
-- `tools/unit-mode.sh production|test`: written and checked read-only (status, compose edits on a copy); the live switch, which restarts recording, not yet run (owner's go).
 
 - Find out why the 11-17 09:10 press recorded 3 frames instead of 7.
 - Find out why the frame rate varies since the 11-18 reboots (1.7-2.7 fps; 1.47 before).
@@ -50,6 +49,6 @@ with a fresh history; the private one keeps Trifork's history unchanged; no key-
 
 ## 4. Deliberately not doing
 
-- **Driving with the indoor exposure**: switch first: `bash tools/unit-mode.sh production` ([operations](docs/operations.md#test-or-production-ready-to-drive)).
+- **Driving in test mode**: the unit is in production mode since 11-19 15:53; before driving after any indoor test, `bash tools/unit-mode.sh` must say READY ([operations](docs/operations.md#test-or-production-ready-to-drive)).
 - **Re-enabling uploads**: they would go to Trifork's bucket. Settle ownership first, or point them at our own bucket.
 - **Publishing Trifork's history, their framework or the cloud manifests.**
