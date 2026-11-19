@@ -76,7 +76,7 @@ strip --strip-debug -o $B/fix/nvgpu-fixed.ko $B/fix/drivers/gpu/nvgpu/nvgpu.ko
 python3 -I tools/image_crcs.py /boot/Image $B/kh/kernel-5.10/Module.symvers --ko $B/fix/nvgpu-fixed.ko
 ```
 
-`gpu-driver-live-test.sh`: step 2 of the runbook (owner, sudo, from a text console).
+`gpu-driver-live-test.sh`: the run-time swap test of 11-19. **Do not use**: reloading `nvgpu` at run time crashes the kernel on this unit, with the original driver too.
 
 After the 11-19 14:14 crash (option A, owner's choice): `gpu-driver-reload-original.sh` unloads and
 reloads the **original** driver the same way, with crash capture on (`ramoops`, `kernel.panic=10`),
