@@ -23,6 +23,7 @@ made to the unit. The reasoning is in the linked [`journal/`](journal/README.md)
 | 14 | The running code differs from the repository's `main`; the log claims cameras are configured when they are absent; 6 more defects. | [09-08](journal/2026-09-08-what-is-wrong-in-the-code.md) |
 | 15 | On this unit, `awk` is mawk and the locale uses comma decimals: text-vs-number and `printf` traps, met three times. | [10-23](journal/2026-10-23-why-was-the-led-green-during-the-outage.md) |
 | 16 | **Hardware video decoding and Firefox's start-up leave the GPU clock at 1109 MHz**, above the power mode's 510 MHz cap, until reboot (+8 W). Cause: the L4T 35.1 GPU driver's clock arbiter falls back to the maximum and ignores the cap (NVIDIA fixed it in 35.2.1). Lowering the cap one step and restoring it resets the clock; `gpu-clock-guard` does this within ~10 s. With it, hardware-decoded 4K playback costs ~1 W. | [11-18](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) |
+| 17 | **The stuck GPU clock is fixed by NVIDIA's 35.2.1 driver change, rebuilt for this unit's 35.1 kernel**: with it, the hardware decoder and Firefox leave the clock at the 510 MHz cap. **Unloading and reloading `nvgpu` on a running system crashes the kernel, even with the original driver.** | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |
 
 ## 2. Changes made to the unit
 
@@ -42,4 +43,4 @@ Each keeps the original beside it. **How to undo each one: [`docs/reverting.md`]
 | 11-17 | **indoor exposure**: 100 ms cap on both cameras. **Revert before driving** | `/opt/apps/deepstream/config-override/config.yaml`, compose mount | [11-17](journal/2026-11-17-can-the-cameras-see-indoors.md) |
 | 11-18 | **GPU clock guard** (owner, sudo) | `/opt/apps/gpu-clock-guard/`, `gpu-clock-guard.service` | [11-18](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) |
 | 11-18 | container logs capped at 3 × 10 MB each | the three `docker-compose.yaml` | [11-18](journal/2026-11-18-capping-the-container-logs.md) |
-| 11-19 | **one-boot trial of the rebuilt GPU driver** (owner, sudo): modprobe rule + loader; loads the original unless a one-shot flag is set. Inert without the flag | `/etc/modprobe.d/nvgpu-fix-trial.conf`, `/usr/local/sbin/nvgpu-trial-load`, `/var/lib/nvgpu-fix/` | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |
+| 11-19 | **rebuilt GPU driver, permanent** (owner, sudo; replaced the one-boot trial): modprobe rule + loader + clean-shutdown service; fixed driver at every boot, automatic fallback to the original after a crash. Original driver file untouched | `/etc/modprobe.d/nvgpu-fix.conf`, `/usr/local/sbin/nvgpu-fix-load`, `nvgpu-fix-shutdown.service`, `/var/lib/nvgpu-fix/` | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |

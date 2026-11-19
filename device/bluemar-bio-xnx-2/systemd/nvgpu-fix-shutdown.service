@@ -1,0 +1,17 @@
+# alienord 2026-11-19: tells /usr/local/sbin/nvgpu-fix-load that the system shut down cleanly
+# (removes /var/lib/nvgpu-fix/pending when stopped at shutdown or reboot).
+[Unit]
+Description=Rebuilt GPU driver: record a clean shutdown
+DefaultDependencies=no
+After=local-fs.target
+Before=sysinit.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/local/sbin/nvgpu-fix-load clear
+
+[Install]
+WantedBy=sysinit.target

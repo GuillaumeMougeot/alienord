@@ -1,6 +1,6 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN: **the fix works.** One-boot trial 11-19 14:49: the fixed driver loaded at boot, recording normal, and the decoder probe that used to stick the clock at 1109 MHz left it at 510 MHz (150/150 samples, guard idle). (The two earlier crashes came from reloading the driver at run time, which crashes even the original.) Firefox 14:55 also left it alone. Permanent setup with automatic fallback prepared, waiting for the owner to install it. Owner chose
+**Kind:** change · **Status:** OPEN (one check left): **fixed and installed permanently 11-19 15:06.** The rebuilt driver loads at every boot, with automatic fallback to the original after a crash. The decoder probe and Firefox, which used to stick the GPU clock at 1109 MHz, leave it at the 510 MHz cap. Open: the first reboot with the fixed driver hung at its very last step and the watchdog finished it (~3 min); one more reboot will show whether that repeats. Owner chose
 option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
@@ -275,6 +275,28 @@ written, original); wrong module (original); read-only state (original); fixed r
 panic setting restored: added after the first run); clean-shutdown `clear`; already loaded
 (nothing); a later boot after auto-disable (original). `systemd-analyze verify` on the service:
 no complaint; `modprobe -C` parses the rule.
+
+### Permanent setup installed (11-19, 15:06) and first reboot (15:07)
+
+Owner ran `install-nvgpu-fix.sh` at 15:06 and rebooted. Installed files match the sandbox-tested
+versions (sha256 `2de728f5…` rule, `11e196c2…` loader, `889e8c61…` service, `761608e8…` module);
+trial files gone; `nvgpu-fix-shutdown.service` enabled and active. Mirrored in
+`device/bluemar-bio-xnx-2/nvgpu-fix/` and `device/bluemar-bio-xnx-2/systemd/`.
+
+Boot `2ab94e81` (15:10): `nvgpu-fix: loaded the FIXED driver`; taint `O`; `pending` written; all
+services active; no `[ERR]` lines.
+
+**One thing to watch.** The reboot itself went cleanly up to the end: at 15:07:10 the shutdown
+service ran (`pending` removed, which is why this boot did not count the reboot as a crash), the
+filesystems were unmounted, `Shutting down.`, `Syncing filesystems`, journal stopped at 15:07:11.
+Then the kernel's final restart step hung, and the hardware watchdog reset the unit
+(`reset_reason` = `BCCPLEXWDT`; next boot 15:10:11, ~3 min). The reboot before it (14:48, original
+driver) ended in a normal software reset (`MAINSWRST`). The driver's shutdown handler
+(`gk20a_pm_shutdown`) is identical to 35.1's: the patch does not touch it. One sample
+is not enough to tell whether the fixed driver causes this. Effect if it does: a reboot takes ~3
+minutes longer and is finished by the watchdog; nothing is lost, the loader is not affected (the
+mark is removed before the hang), and a field unit is normally switched off by its power, not
+rebooted. Next: one more reboot by the owner, then read `reset_reason`.
 
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)

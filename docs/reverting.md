@@ -6,12 +6,12 @@ One place for every revert command. Newest first. Each change and its reason:
 **Restarting deepstream** applies a compose-file change and recreates the container (~30 s):
 `docker exec deepstream_app kill -INT $(cat /var/shared/pid/deepstream.pid)`.
 
-## Rebuilt GPU driver (`nvgpu.ko`, in progress 2026-11-19)
+## Rebuilt GPU driver (`nvgpu.ko`, 2026-11-19)
 
-Installed 11-19 as a **one-boot trial** only: without its flag file every boot loads the original.
-Remove it: `sudo bash /home/xnx/gpu-test/remove-one-boot-trial.sh`, or by hand
-`sudo rm /etc/modprobe.d/nvgpu-fix-trial.conf /usr/local/sbin/nvgpu-trial-load && sudo rm -r /var/lib/nvgpu-fix && sync`.
-Full recovery instructions, case by case: [gpu-driver-fix.md](gpu-driver-fix.md).
+Back to the original for a while: `sudo touch /var/lib/nvgpu-fix/disabled && sync && sudo reboot`.
+Remove everything: `sudo bash /home/xnx/gpu-test/remove-nvgpu-fix.sh`, or just
+`sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot`. Every case, including the NVMe on
+another PC: [gpu-driver-fix.md](gpu-driver-fix.md).
 
 ## GPU clock guard (2026-11-18)
 

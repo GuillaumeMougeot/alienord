@@ -3,9 +3,9 @@
 **Read this from another device if the unit will not start.** Every command is spelled out. Why
 and how it was tested: [journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
 
-**Status (2026-11-19, 15:05):** the fix works (one-boot trial: the decoder probe and Firefox left the
-GPU clock at the 510 MHz cap). The permanent setup below is prepared, installed by the owner with
-`sudo bash /home/xnx/gpu-test/install-nvgpu-fix.sh`.
+**Status (2026-11-19, 15:20):** installed and running (the decoder probe and Firefox leave the GPU
+clock at the 510 MHz cap). To watch: the first reboot with it hung at the very end and was finished by
+the watchdog (~3 min); see the journal.
 
 ## What it is
 

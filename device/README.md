@@ -19,4 +19,4 @@ Changes made during the handover keep the original beside them as `*.orig-YYYYMM
 - `gcs-archive-job/` + `systemd-user/gcs-archive.service`: mirror of all cloud buckets to the SSD (journal 2026-11-16, cloud data)
 - `network-eth2.txt`: office link preferred over 4G (journal 2026-11-16, cloud data)
 - `opt-apps/gpu-clock-guard/` + `systemd/gpu-clock-guard.service`: keeps the GPU clock under the power-mode cap (journal 2026-11-18, GPU clock)
-- `nvgpu-fix-trial/`: `/etc/modprobe.d/nvgpu-fix-trial.conf` + `/usr/local/sbin/nvgpu-trial-load`, one-boot trial of the rebuilt GPU driver (journal 2026-11-19, GPU driver)
+- `nvgpu-fix/` + `systemd/nvgpu-fix-shutdown.service`: `/etc/modprobe.d/nvgpu-fix.conf` + `/usr/local/sbin/nvgpu-fix-load`, the rebuilt GPU driver with automatic fallback (journal 2026-11-19, GPU driver)
