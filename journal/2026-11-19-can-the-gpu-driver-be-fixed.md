@@ -1,6 +1,6 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN: built 11-19; **live test crashed the kernel (14:14)**; cause undetermined (fix vs. reloading the driver at run time); next test waiting on the owner. Owner chose
+**Kind:** change · **Status:** OPEN: built 11-19; the run-time live test crashed the kernel (14:14), and so does reloading the **original** driver the same way (14:34): the test method, not the fix, crashes. The fix is untested; a one-boot trial is proposed to the owner. Owner chose
 option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
@@ -168,6 +168,42 @@ is NULL. A live driver has neither, so the driver freed memory through a **stale
 Why the record is lost: the crash-record store (`ramoops`, a reserved RAM area kept across resets)
 exists on this unit but its module is not loaded, so `/sys/fs/pstore` is empty. Any further test
 should load it first (`modprobe ramoops`) and set `kernel.panic=10` so the reset comes in 10 s.
+
+## Option A (11-19, 14:34): the original driver crashes the same way
+
+Owner's choice. `gpu-driver-reload-original.sh` did the same swap with Lenovo's **unmodified**
+module: stop services, `rmmod nvgpu`, `modprobe nvgpu`, power mode, restart. Original reloaded
+cleanly (`taint ''`) at 14:34:35; services restarted at 14:34:36; the kernel crashed at once
+(journal ends 14:34:36). With `kernel.panic=10` the unit reset itself (`PMC reset source:
+MAINSWRST`) and was back at 14:35:18 on the original, everything running.
+
+**So the crash comes from reloading `nvgpu` at run time on this system, not from our fix.** The
+fix has not really been tested yet: the 14:14 crash says nothing about it either way. (Before each
+unload, stopping recording logged `nvgpu_tsg_unbind_channel: unbind common failed` /
+`Channel 50x unbind failed, tearing down TSG 6`: the driver is not left clean when the pipeline
+stops, which fits.)
+
+**Our mistake, again:** the crash capture did not work. `ramoops` loaded but failed to attach
+(`failed to locate DT /reserved-memory resource`, error -22): its reserved area on this unit is
+placed dynamically (no fixed address in the device tree), which the 5.10 driver cannot use. The
+script checked that the module was loaded, not that it attached. No call trace was saved.
+
+### Proposed next test: one boot with the fixed driver, reverting by itself
+
+The driver must be tested the way it normally loads: once, at boot. Rather than edit the boot menu
+(read from the eMMC, not mounted; and an `extlinux.conf.sig` beside the NVMe copy means the
+firmware may check a signature, so editing it is a risk of its own), a **one-boot trial**:
+
+- `/etc/modprobe.d/nvgpu-fix-trial.conf`: `install nvgpu /usr/local/sbin/nvgpu-trial-load`;
+- that script, when a flag file `/var/lib/nvgpu-fix/try-next-boot` exists: **deletes the flag and
+  syncs first**, sets `kernel.panic=10`, then loads the fixed module; otherwise it loads the
+  original exactly as now (`modprobe --ignore-install nvgpu`). A lock guards against two loads at once;
+- the owner creates the flag and reboots. If that boot crashes, it resets in ~10 s and the next
+  boot has no flag: **back on the original by itself**, no menu, no console;
+- if it boots: check recording, the decoder probe with a trace, Firefox.
+
+Undo: delete the two files. Worst case, a broken script means no GPU driver at boot (system and
+network up): delete the modprobe file from a console or SSH and reboot.
 
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)

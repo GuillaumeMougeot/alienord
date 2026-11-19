@@ -7,7 +7,8 @@ command is spelled out. Why we do this and how the risk was weighed:
 **Status (2026-11-19, 14:30):** built (`tools/nvgpu-fix/`); the live test (step 2) **crashed the
 kernel** at 14:14 when the desktop opened the GPU; the hardware watchdog reset the unit ~4.5 min later
 and it came back on the original driver ([journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md)).
-Do not re-run step 2 as is. Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
+Reloading the **original** driver the same way also crashes (14:34): step 2's method is unusable on this
+system; do not re-run it. A one-boot trial replaces it (proposed, see the journal). Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
 recovery below is needed.
 
 ## What changes
