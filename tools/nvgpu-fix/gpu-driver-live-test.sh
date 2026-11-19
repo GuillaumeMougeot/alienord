@@ -1,5 +1,5 @@
 #!/bin/bash
-# Live test of the rebuilt GPU driver (alienord, 2026-11-19). Run from a TEXT CONSOLE (Ctrl+Alt+F3):
+# Live test of the rebuilt GPU driver (alienord, 2026-11-19). Run from a text console (Ctrl+Alt+F3) or SSH:
 #     sudo bash /tmp/gpu-driver-live-test.sh
 # The desktop is stopped and restarted. NOTHING is written to /lib/modules or the boot config:
 # any reboot brings back the original driver. Runbook: docs/gpu-driver-fix.md in alienord.
@@ -27,6 +27,18 @@ start_all() {
 holders() { fuser /dev/nvhost-*gpu /dev/nvgpu/igpu0/* 2>/dev/null | tr -s ' ' '\n' | grep -E '^[0-9]+' | sort -u; }
 
 [ "$(id -u)" = 0 ] || { echo "run with sudo"; exit 1; }
+
+# Stopping gdm runs `loginctl terminate-seat seat0`, which ends EVERY session on the unit's screen and
+# keyboard, text consoles included (that killed the first attempt, 11-19 14:07). So the test re-launches
+# itself as a transient system service, outside any login session, and you follow the log instead.
+if [ -z "$INVOCATION_ID" ]; then
+    systemctl reset-failed gpu-driver-test 2>/dev/null
+    systemd-run --unit=gpu-driver-test --collect /bin/bash "$(readlink -f "$0")" || { echo "could not start"; exit 1; }
+    echo "Test running in the background (unit gpu-driver-test). Your login will be closed when the desktop"
+    echo "stops; just log in again here (Ctrl+Alt+F3) and run:   tail -f ~/gpu-driver-test.log"
+    sleep 2; exec tail -f $LOG
+fi
+
 : > $LOG; chown xnx:xnx $LOG
 say "=== GPU driver live test ==="
 

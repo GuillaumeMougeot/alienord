@@ -122,6 +122,18 @@ Details, inputs and tools: [`tools/nvgpu-fix/`](../tools/nvgpu-fix/README.md). W
 
 Power while building (2 jobs, lowest priority): 14.4 W average, 15.2 W peak.
 
+## Live test, first attempt (11-19, 14:07): interrupted, driver untouched
+
+The owner ran the script from a text console (tty3). It stopped the guard, recording and the
+camera daemon, then the desktop, and was killed at 14:07:07, before its next step: gdm's unit has
+`ExecStopPost=/bin/loginctl terminate-seat seat0`, so stopping gdm logs out **every** session on
+the unit's screen and keyboard, text consoles included (`Stopped Session 513 of user xnx`,
+`getty@tty3` restarted). Our runbook's "use a text console" advice did not protect against that:
+our mistake. The original driver was never unloaded (still loaded, nothing using it). The owner
+was left with a black screen on Ctrl+Alt+F1 and all services stopped; restored with
+`/tmp/gpu-test-restore.sh`. The script now re-launches itself under `systemd-run`, outside any
+login session, and the owner follows the log.
+
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
 right after loading, before anything uses the GPU, which also sets mode 5's TPC power-gating mask.

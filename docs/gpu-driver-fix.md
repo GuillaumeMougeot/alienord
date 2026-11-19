@@ -42,9 +42,15 @@ the initrd, so the bootloader, kernel and initrd are never touched.
    `revert.sh`, add the "no GPU driver" boot entry and lengthen the boot-menu wait; reboot; check.
 4. **Watch**: `journalctl -u gpu-clock-guard` should stay silent even with Firefox and video.
 
-Before step 2 or 3, switch to a **text console**: `Ctrl+Alt+F3`, log in as `xnx`. The desktop
-is stopped during the live test, and terminals inside it (including tmux sessions started there)
-may die.
+Before step 2 or 3, switch to a **text console**: `Ctrl+Alt+F3`, log in as `xnx`. **Stopping the
+desktop also logs out that text console**: gdm's unit runs `loginctl terminate-seat seat0` when it
+stops, which ends every session on the unit's screen and keyboard. (The first live test, 11-19
+14:07, died that way, after stopping the services and before touching the driver.) So the test
+script re-launches itself as a background system service (`systemd-run`, unit `gpu-driver-test`)
+and shows the log; when the console logs you out, log in again and run
+`tail -f ~/gpu-driver-test.log`. If you are ever left with a black desktop and stopped services,
+`sudo bash /tmp/gpu-test-restore.sh` (or `sudo systemctl start nvargus-daemon deepstream
+deepstream-monitoring gpu-clock-guard gdm`) brings everything back.
 
 ## Recovery: what to do in each case
 
