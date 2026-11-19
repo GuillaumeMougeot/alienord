@@ -1,107 +1,73 @@
-# Rebuilt GPU driver (`nvgpu.ko`): test, install, recover
+# Rebuilt GPU driver (`nvgpu.ko`): how it loads, how to go back
 
-**Read this from another device if the unit will not start.** Self-contained on purpose: every
-command is spelled out. Why we do this and how the risk was weighed:
-[journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
+**Read this from another device if the unit will not start.** Every command is spelled out. Why
+and how it was tested: [journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
 
-**Update (2026-11-19, 14:52): one-boot trial passed** (fixed driver at boot, clock held at 510 MHz through
-the decoder probe); see the journal. Not permanent yet.
+**Status (2026-11-19, 15:05):** the fix works (one-boot trial: the decoder probe and Firefox left the
+GPU clock at the 510 MHz cap). The permanent setup below is prepared, installed by the owner with
+`sudo bash /home/xnx/gpu-test/install-nvgpu-fix.sh`.
 
-**Status (2026-11-19, 14:30):** built (`tools/nvgpu-fix/`); the live test (step 2) **crashed the
-kernel** at 14:14 when the desktop opened the GPU; the hardware watchdog reset the unit ~4.5 min later
-and it came back on the original driver ([journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md)).
-Reloading the **original** driver the same way also crashes (14:34): step 2's method is unusable on this
-system; do not re-run it. A one-boot trial replaces it: `sudo bash /home/xnx/gpu-test/install-one-boot-trial.sh` (files in
-`tools/nvgpu-fix/trial/`); undo with `sudo bash /home/xnx/gpu-test/remove-one-boot-trial.sh`, or by hand:
-`sudo rm /etc/modprobe.d/nvgpu-fix-trial.conf /usr/local/sbin/nvgpu-trial-load && sync`. Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
-recovery below is needed.
-
-## What changes
+## What it is
 
 NVIDIA's GPU driver in L4T 35.1 lets its clock arbiter set the GPU to 1109 MHz, ignoring the power
-mode's 510 MHz cap (+8 W, supply cut-outs). NVIDIA fixed it in L4T 35.2.1. We rebuild the 35.1
-driver with that fix added, for the exact kernel running on the unit (Lenovo's build).
+mode's 510 MHz cap (+8 W, supply cut-outs). NVIDIA fixed it in L4T 35.2.1. We rebuilt the 35.1
+driver with that fix for the exact kernel on the unit ([`tools/nvgpu-fix/`](../tools/nvgpu-fix/README.md)).
+
+The original driver file is **never modified**. A loader script decides at each boot which one
+to load, and falls back to the original on its own.
 
 | file | role |
 |---|---|
-| `/lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko` | **original** driver (Lenovo). **Never modified.** sha256 `b62d7dec1c2b91804c909a2c18251488e83b009db88369b2e9fa4573bbc13f67` |
-| `/lib/modules/5.10.104-tegra/updates/nvgpu.ko` | **fixed** driver. Does not exist until step 3 |
-| `/lib/modules/5.10.104-tegra/modules.dep` | module index (`depmod`): says which file is loaded as `nvgpu`. After step 3 it points at `updates/nvgpu.ko` |
-| `/opt/apps/gpu-driver-fix/` | after step 3: the fixed module's source copy, `revert.sh`, notes; root-owned |
-| boot menu entry **"no GPU driver"** | after step 3: same system, kernel told never to load `nvgpu` (`module_blacklist=nvgpu`) |
-| `gpu-clock-guard.service` | stays installed and running throughout; with the fix it should never act |
+| `/lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko` | **original** (Lenovo), untouched. sha256 `b62d7dec…3f67` |
+| `/var/lib/nvgpu-fix/nvgpu-fixed.ko` | **fixed** driver. sha256 `761608e8…f3ec` |
+| `/etc/modprobe.d/nvgpu-fix.conf` | one line: `install nvgpu /usr/local/sbin/nvgpu-fix-load`. **Delete it and the original loads, always** |
+| `/usr/local/sbin/nvgpu-fix-load` | the loader (rules below) |
+| `/etc/systemd/system/nvgpu-fix-shutdown.service` | at every clean shutdown or reboot, removes `/var/lib/nvgpu-fix/pending` |
+| `/var/lib/nvgpu-fix/pending` | written before the fixed driver loads; removed at clean shutdown |
+| `/var/lib/nvgpu-fix/disabled` | if present, the original loads. Written by hand, or automatically after a crash |
+| `/var/lib/nvgpu-fix/boot.log` | one line per decision |
+| `gpu-clock-guard.service` | stays; with the fix it has nothing to do |
 
-The driver is loaded after the root filesystem is up (`/etc/modules-load.d/nv.conf`), not from
-the initrd, so the bootloader, kernel and initrd are never touched.
+The driver loads at ~6 s into boot (`systemd-modules-load`, `/etc/modules-load.d/nv.conf`), after
+the NVMe root is mounted, not from the initrd: the bootloader, kernel and initrd are not involved.
 
-## The steps
+## The loader's rules, at each boot
 
-1. **Build** (agent, as `xnx`, no root): changes nothing on the unit. First an *unmodified* build,
-   compared with Lenovo's module; then the fixed one.
-2. **Live test** (owner, from a text console): `sudo bash /tmp/gpu-driver-live-test.sh`
-   (copy in `tools/nvgpu-fix/`). It stops recording, the camera daemon and the desktop, unloads
-   the original driver, loads the fixed one (`/home/xnx/build/nvgpu-fix/fix/nvgpu-fixed.ko`,
-   copied to `/root/` and checksum-checked first), re-applies the power mode, restarts
-   everything, waits for frames, then repeats the decoder probe with a kernel trace and the guard
-   off. Log: `/home/xnx/gpu-driver-test.log`. **Nothing is written to `/lib/modules`**: the
-   fixed driver stays loaded until the next reboot, which returns to the original. When the
-   desktop restarts it may take over the screen: `Ctrl+Alt+F3` returns to the script.
-3. **Install** (owner, one sudo script): copy the fixed module to `updates/`, run `depmod`, place
-   `revert.sh`, add the "no GPU driver" boot entry and lengthen the boot-menu wait; reboot; check.
-4. **Watch**: `journalctl -u gpu-clock-guard` should stay silent even with Firefox and video.
+1. `disabled` exists: **original**.
+2. `pending` exists (the last boot with the fixed driver did not shut down cleanly):
+   - the reset reason (`/sys/devices/platform/c360000.pmc/reset_reason`) is `SYS_RESET_N`, a
+     power cut or the power button: not the driver's fault; continue;
+   - anything else (`MAINSWRST` after a crash, `BCCPLEXWDT` after a hang): write `disabled` with
+     the reason, **original**, and it stays so until someone deletes `disabled`.
+3. The fixed module's checksum is wrong, or `pending` cannot be written: **original**.
+4. Otherwise: write `pending`, set `kernel.panic=10` (a crash resets the unit in 10 s instead of
+   hanging until the watchdog), load the **fixed** driver; if it is refused, **original**.
 
-Before step 2 or 3, switch to a **text console**: `Ctrl+Alt+F3`, log in as `xnx`. **Stopping the
-desktop also logs out that text console**: gdm's unit runs `loginctl terminate-seat seat0` when it
-stops, which ends every session on the unit's screen and keyboard. (The first live test, 11-19
-14:07, died that way, after stopping the services and before touching the driver.) So the test
-script re-launches itself as a background system service (`systemd-run`, unit `gpu-driver-test`)
-and shows the log; when the console logs you out, log in again and run
-`tail -f ~/gpu-driver-test.log`. If you are ever left with a black desktop and stopped services,
-`sudo bash /tmp/gpu-test-restore.sh` (or `sudo systemctl start nvargus-daemon deepstream
-deepstream-monitoring gpu-clock-guard gdm`) brings everything back.
+So a fixed driver that crashes costs **one** crash: the unit resets itself and the next boot is on
+the original. No menu, no console needed.
 
-## Recovery: what to do in each case
-
-### The revert command
-
-After step 3, this alone puts the original driver back (it copies the original over the fixed
-copy; the index keeps pointing at `updates/nvgpu.ko`, which is now the original, so `depmod` is
-not needed):
+## Checking
 
 ```bash
-sudo cp /lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko /lib/modules/5.10.104-tegra/updates/nvgpu.ko && sync && sudo reboot
+cat /sys/module/nvgpu/taint            # "O" = fixed driver, empty = original
+tail -3 /var/lib/nvgpu-fix/boot.log    # what the loader decided, and why
+cat /var/lib/nvgpu-fix/disabled        # exists only if the fix is off; says why
+journalctl -u gpu-clock-guard -b       # should show only "Started": the guard never had to act
 ```
 
-The same command is installed as `sudo /opt/apps/gpu-driver-fix/revert.sh`.
+## Going back, case by case
 
-**Do not just delete `updates/nvgpu.ko`**: the index would still point at it, and the unit would
-come up with no GPU driver at all. The tidy removal is both steps together:
+| case | what you do |
+|---|---|
+| **you want the original for a while** | `sudo touch /var/lib/nvgpu-fix/disabled && sync && sudo reboot`. Back to the fix: `sudo rm /var/lib/nvgpu-fix/disabled && sync && sudo reboot` |
+| **the loader disabled the fix by itself** | read `/var/lib/nvgpu-fix/disabled` and the kernel log of the boot before (`journalctl -b -1 -k`); the unit is on the original and fine. Retry only after looking at why |
+| **remove everything** | `sudo bash /home/xnx/gpu-test/remove-nvgpu-fix.sh`, then reboot. By hand: `sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot` (the rest is then inert) |
+| **unit up, but no GPU driver at all** (no desktop, no recording: a broken loader) | `Ctrl+Alt+F3` or SSH, log in, `sudo rm /etc/modprobe.d/nvgpu-fix.conf && sync && sudo reboot` |
+| **crash, black screen** | wait: the unit resets itself (10 s with the fixed driver, ~4-5 min via the watchdog otherwise), and after a crash the loader switches to the original |
+| **none of that works** | take the NVMe out (below) |
+| **last resort** | reflash with Lenovo's SE70 image (USB recovery mode from an x86 Ubuntu PC). Recordings on the data SSD (`/media/data`) are on a separate disk |
 
-```bash
-sudo rm /lib/modules/5.10.104-tegra/updates/nvgpu.ko && sudo depmod -a 5.10.104-tegra && sync && sudo reboot
-```
-
-Check after the reboot that the original is loaded:
-
-```bash
-modinfo -n nvgpu        # either path is fine if the next line matches
-sha256sum $(modinfo -n nvgpu)    # must be b62d7dec...3f67 (the original)
-cat /sys/devices/17000000.gv11b/devfreq/17000000.gv11b/cur_freq   # GPU present: a number
-```
-
-### Case by case
-
-| case | what you see | what you do |
-|---|---|---|
-| **A. live test: fixed module refused** | the script says the load failed; no GPU | `sudo modprobe nvgpu` (reloads the original), then `sudo systemctl start gdm`; recording restarts by itself within a minute. Or just `sudo reboot`. Nothing was written to disk. |
-| **B. live test: freeze or kernel crash** | screen black, keyboard dead | wait: a kernel crash halts the kernel and the hardware watchdog resets the unit by itself (~4-5 min, seen 11-19). Or hold the power button ~10 s. Nothing was written to disk; the original loads. |
-| **C. installed: works but misbehaves** | errors, odd clocks, recording problems | the revert command, whenever convenient. |
-| **D. installed: refused at boot** | unit boots, no desktop or a broken one, no recording | `Ctrl+Alt+F3`, log in as `xnx` (or SSH in), the revert command. |
-| **E. installed: crashes at every boot** | unit reboots in a loop, or hangs during start-up | power on and watch the screen: the boot menu titled **"L4T boot options"** lists the entries; pick **"no GPU driver"** (by its number, or arrow keys and Enter). The unit starts without the GPU driver: `Ctrl+Alt+F3`, log in, the revert command, which reboots normally. |
-| **F. E fails: no menu, or the entry does not help** | still looping | take the NVMe out (see below). |
-| **G. last resort** | the unit will not start from any of the above | reflash with Lenovo's SE70 image (USB recovery mode from an x86 Ubuntu PC). Recordings on the data SSD (`/media/data`) are on a separate disk and are not touched by any of this. |
-
-### F in detail: fixing the NVMe on another computer
+### The NVMe on another computer
 
 The system disk is the NVMe SSD (partition `nvme0n1p1`, ext4, label `rootfs`). On any Linux PC
 with a USB NVMe enclosure (or an NVMe slot):
@@ -109,18 +75,19 @@ with a USB NVMe enclosure (or an NVMe slot):
 ```bash
 lsblk -o NAME,SIZE,FSTYPE,PARTLABEL          # find the 238.5G disk; partition label "rootfs"
 sudo mkdir -p /mnt/unit && sudo mount /dev/sdX1 /mnt/unit     # sdX1 = that partition
-M=/mnt/unit/lib/modules/5.10.104-tegra
-sha256sum $M/kernel/drivers/gpu/nvgpu/nvgpu.ko               # must be b62d7dec...3f67
-sudo cp $M/kernel/drivers/gpu/nvgpu/nvgpu.ko $M/updates/nvgpu.ko
+sudo rm /mnt/unit/etc/modprobe.d/nvgpu-fix.conf
 sync && sudo umount /mnt/unit
 ```
 
-Put the NVMe back and start the unit. Do not touch the other disk (the 931 GB data SSD).
+Put the NVMe back and start the unit: it loads the original driver. Do not touch the other disk
+(the 931 GB data SSD).
 
-## Where the boot menu lives
+## Never do this
 
-The kernel command line at boot does not match `/boot/extlinux/extlinux.conf` on the NVMe, so
-the boot menu is most likely read from the eMMC system (`/dev/mmcblk0p1`, partition label `APP`,
-not mounted). Step 3 confirms this before editing, keeps a dated backup of the file next to it,
-and adds the entry there. `TIMEOUT 10` in that file is in tenths of a second (~1 s), too short to
-choose; step 3 raises it. This section will be updated with what step 3 finds.
+**Do not unload and reload `nvgpu` on a running system** (`rmmod` then `modprobe` or `insmod`): on
+this unit it crashes the kernel, with the original driver too (11-19). Driver changes take effect
+at the next boot.
+
+Stopping the desktop (`systemctl stop gdm`) logs out every session on the unit's own screen and
+keyboard, text consoles included (gdm runs `loginctl terminate-seat seat0`). Run such scripts over
+SSH or under `systemd-run`.
