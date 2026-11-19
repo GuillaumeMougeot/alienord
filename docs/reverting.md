@@ -6,6 +6,11 @@ One place for every revert command. Newest first. Each change and its reason:
 **Restarting deepstream** applies a compose-file change and recreates the container (~30 s):
 `docker exec deepstream_app kill -INT $(cat /var/shared/pid/deepstream.pid)`.
 
+## Rebuilt GPU driver (`nvgpu.ko`, in progress 2026-11-19)
+
+Not installed yet. Full recovery instructions, case by case: [gpu-driver-fix.md](gpu-driver-fix.md).
+Short form once installed: `sudo /opt/apps/gpu-driver-fix/revert.sh`.
+
 ## GPU clock guard (2026-11-18)
 
 ```bash

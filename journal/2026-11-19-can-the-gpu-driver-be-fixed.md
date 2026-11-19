@@ -58,6 +58,8 @@ loaded at boot:
 
 ## How to revert, case by case (written before building, 11-19)
 
+The maintained version, readable from another device: [docs/gpu-driver-fix.md](../docs/gpu-driver-fix.md).
+
 The files involved:
 
 | file | what |
