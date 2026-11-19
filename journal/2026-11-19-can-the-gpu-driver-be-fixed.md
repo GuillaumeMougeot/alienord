@@ -1,7 +1,7 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN. Owner chose option 1 (11-19): rebuild NVIDIA's GPU driver module
-for L4T 35.1 with the ~10-line fix from 35.2.1
+**Kind:** change · **Status:** OPEN: built and verified 11-19; live test next (owner). Owner chose
+option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
 
@@ -91,3 +91,37 @@ Check afterwards: `modinfo -n nvgpu` shows the `kernel/...` path and `sha256sum`
 
 The install script will also place this revert as a root-owned script on the unit, so it is one
 short command to type from a console.
+
+## The build (11-19, morning)
+
+Details, inputs and tools: [`tools/nvgpu-fix/`](../tools/nvgpu-fix/README.md). What happened, in order:
+
+1. **The fix is bigger than we said.** We had called it "about 10 lines". NVIDIA's 35.2.1 change
+   is 249 lines in 11 files: 35.1 had PM QoS support switched off (`CONFIG_GK20A_PM_QOS := n`), so
+   the driver never learned the power-mode cap at all; 35.2.1 switches it on, adds min/max
+   frequency notifiers for kernel 5.10, and only then clamps the arbiter. We kept exactly those
+   hunks and left out the rest of 35.2.1.
+2. `make` is not installed; Ubuntu's package was downloaded through apt and unpacked locally (no
+   root, nothing installed).
+3. Kconfig cannot run in the headers-only tree, so the two generated config files were written by
+   a small script, validated by reproducing NVIDIA's own files exactly.
+4. The checksum mismatch was solved by reading the CRC table **out of the running kernel image**
+   (`/boot/Image`), cross-checked against the 1,095 modules Lenovo built: 5,018 agree, 0 disagree.
+   Compiling the kernel's own `module.c` and `qos.c` in our tree reproduced the image's values
+   (`module_layout 0xc23f4489`, `dev_pm_qos_add_notifier 0xb64e7201`), so our build sees the same
+   kernel structures as Lenovo's.
+5. **Caught before it mattered:** the fix needs two kernel functions no Lenovo module uses
+   (`dev_pm_qos_add/remove_notifier`). Their checksums in NVIDIA's headers were wrong for this
+   kernel; the first fixed build carried them and would have been **refused at load** (harmless,
+   but the test would have failed). The kernel image gave the right values; relinked.
+6. One NVIDIA header missing from the headers package (`nvmap_exports.h`, three declarations) was
+   taken from the 35.1 source mirror; its only commit there is NVIDIA's import.
+7. **Unmodified build = Lenovo's module** in everything but compiler output: same imports and
+   checksums, same symbols, same data sizes, same strings. Lenovo did not change NVIDIA's driver.
+8. Fixed module: `nvgpu-fixed.ko`, sha256 `761608e8…f3ec`; all 390 imports verified.
+
+Power while building (2 jobs, lowest priority): 14.4 W average, 15.2 W peak.
+
+A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
+"no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
+right after loading, before anything uses the GPU, which also sets mode 5's TPC power-gating mask.

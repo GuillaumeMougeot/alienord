@@ -4,8 +4,9 @@
 command is spelled out. Why we do this and how the risk was weighed:
 [journal](../journal/2026-11-19-can-the-gpu-driver-be-fixed.md).
 
-**Status (2026-11-19):** building. Nothing installed. Until step 3 is done, the unit runs the
-original driver and none of the recovery below is needed.
+**Status (2026-11-19, 10:00):** built and verified (`tools/nvgpu-fix/`); live test (step 2) next.
+Nothing installed. Until step 3 is done, the unit runs the original driver and none of the
+recovery below is needed.
 
 ## What changes
 
@@ -29,10 +30,14 @@ the initrd, so the bootloader, kernel and initrd are never touched.
 
 1. **Build** (agent, as `xnx`, no root): changes nothing on the unit. First an *unmodified* build,
    compared with Lenovo's module; then the fixed one.
-2. **Live test** (owner, one sudo script, from a text console): stop recording and the desktop,
-   unload the original driver, load the fixed one from the build folder, check, then either keep
-   it running until the next reboot or put the original back. **Nothing is written to
-   `/lib/modules`**: any reboot returns to the original.
+2. **Live test** (owner, from a text console): `sudo bash /tmp/gpu-driver-live-test.sh`
+   (copy in `tools/nvgpu-fix/`). It stops recording, the camera daemon and the desktop, unloads
+   the original driver, loads the fixed one (`/home/xnx/build/nvgpu-fix/fix/nvgpu-fixed.ko`,
+   copied to `/root/` and checksum-checked first), re-applies the power mode, restarts
+   everything, waits for frames, then repeats the decoder probe with a kernel trace and the guard
+   off. Log: `/home/xnx/gpu-driver-test.log`. **Nothing is written to `/lib/modules`**: the
+   fixed driver stays loaded until the next reboot, which returns to the original. When the
+   desktop restarts it may take over the screen: `Ctrl+Alt+F3` returns to the script.
 3. **Install** (owner, one sudo script): copy the fixed module to `updates/`, run `depmod`, place
    `revert.sh`, add the "no GPU driver" boot entry and lengthen the boot-menu wait; reboot; check.
 4. **Watch**: `journalctl -u gpu-clock-guard` should stay silent even with Firefox and video.

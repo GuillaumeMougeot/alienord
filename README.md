@@ -46,6 +46,7 @@ reverse-engineered on unit `bluemar-bio-xnx-2`, and this repository holds everyt
 | **the unit** | its host configuration, including every change made | `device/` |
 | **checksums** | models, images (the cloud-object lists are kept private) | `manifests/` |
 | **guard rail** | the credential check run before every commit and push | `tools/` |
+| **GPU driver fix** | rebuilt `nvgpu.ko` with NVIDIA's 35.2.1 clock fix: patch, build and verification tools | `tools/nvgpu-fix/` |
 | **superseded** | the old handbook and brief | `archive/` |
 
 ## 4. Conventions
