@@ -8,8 +8,10 @@ One place for every revert command. Newest first. Each change and its reason:
 
 ## Rebuilt GPU driver (`nvgpu.ko`, in progress 2026-11-19)
 
-Not installed yet. Full recovery instructions, case by case: [gpu-driver-fix.md](gpu-driver-fix.md).
-Short form once installed: `sudo /opt/apps/gpu-driver-fix/revert.sh`.
+Installed 11-19 as a **one-boot trial** only: without its flag file every boot loads the original.
+Remove it: `sudo bash /home/xnx/gpu-test/remove-one-boot-trial.sh`, or by hand
+`sudo rm /etc/modprobe.d/nvgpu-fix-trial.conf /usr/local/sbin/nvgpu-trial-load && sudo rm -r /var/lib/nvgpu-fix && sync`.
+Full recovery instructions, case by case: [gpu-driver-fix.md](gpu-driver-fix.md).
 
 ## GPU clock guard (2026-11-18)
 

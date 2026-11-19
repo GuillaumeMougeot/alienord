@@ -42,3 +42,4 @@ Each keeps the original beside it. **How to undo each one: [`docs/reverting.md`]
 | 11-17 | **indoor exposure**: 100 ms cap on both cameras. **Revert before driving** | `/opt/apps/deepstream/config-override/config.yaml`, compose mount | [11-17](journal/2026-11-17-can-the-cameras-see-indoors.md) |
 | 11-18 | **GPU clock guard** (owner, sudo) | `/opt/apps/gpu-clock-guard/`, `gpu-clock-guard.service` | [11-18](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) |
 | 11-18 | container logs capped at 3 × 10 MB each | the three `docker-compose.yaml` | [11-18](journal/2026-11-18-capping-the-container-logs.md) |
+| 11-19 | **one-boot trial of the rebuilt GPU driver** (owner, sudo): modprobe rule + loader; loads the original unless a one-shot flag is set. Inert without the flag | `/etc/modprobe.d/nvgpu-fix-trial.conf`, `/usr/local/sbin/nvgpu-trial-load`, `/var/lib/nvgpu-fix/` | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |

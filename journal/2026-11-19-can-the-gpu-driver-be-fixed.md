@@ -1,6 +1,6 @@
 # Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?
 
-**Kind:** change · **Status:** OPEN: built 11-19; the run-time live test crashed the kernel (14:14), and so does reloading the **original** driver the same way (14:34): the test method, not the fix, crashes. The fix is untested; a one-boot trial is proposed to the owner. Owner chose
+**Kind:** change · **Status:** OPEN: **the fix works.** One-boot trial 11-19 14:49: the fixed driver loaded at boot, recording normal, and the decoder probe that used to stick the clock at 1109 MHz left it at 510 MHz (150/150 samples, guard idle). (The two earlier crashes came from reloading the driver at run time, which crashes even the original.) Not permanent yet: the next boot loads the original. Owner chose
 option 1 (11-19): rebuild NVIDIA's GPU driver module for L4T 35.1 with the fix from 35.2.1
 ([root cause](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md#root-cause-a-bug-in-nvidias-gpu-driver-fixed-in-l4t-3521)).
 Nothing changed on the unit yet.
@@ -231,6 +231,25 @@ The loader was run under `dash` in a sandbox with stand-ins for `modprobe`, `ins
 | flag cannot be deleted | flag left, **original**, panic untouched |
 | fixed module refused | flag deleted, original |
 | original fails to load | its exit code is passed back |
+
+### One-boot trial: result (11-19, 14:49): the fix works
+
+Owner installed and armed it at 14:47 and the unit rebooted (the previous boot ended with a
+software reset, `MAINSWRST`, as `systemctl reboot` does). Boot `f9a802f4`, as `xnx`:
+
+- kernel log at 14:49:05: `nvgpu-trial: TRIAL BOOT: loading the FIXED driver`; `trial.log` line
+  written; flag gone; `/sys/module/nvgpu/taint` = `O` (the out-of-tree build, so the fixed one);
+- `gk20a_scale_init: enabled scaling for GPU`; power mode 5; cap 510 MHz; TPC mask 4; no
+  `[ERR]` lines; no crash;
+- desktop, camera daemon, recording, monitoring, guard all active; recording 1.43 / 1.42 fps
+  (normal 1.44-1.48) in a fresh container;
+- **decoder probe** (14:51:46, `gst-discoverer-1.0` on the 4K HEVC file, as `xnx`, guard ON):
+  NVDEC firmware loaded at 14:51:48 (the hardware decoder, as on 11-18). GPU clock sampled every
+  0.2 s for 30 s, covering the decoder shutting down: **150 samples, all 510 MHz**. The guard
+  logged nothing. On 11-18 the same probe left the clock at 1109 MHz until corrected.
+
+Trial files mirrored in `device/bluemar-bio-xnx-2/nvgpu-fix-trial/`. Still to do: Firefox (the
+other trigger); then the owner decides how to make it permanent.
 
 A detail for the live test: a freshly loaded driver creates a new frequency device whose cap is
 "no limit"; the test re-runs the boot-time power-mode command (`nvpmodel -f /etc/nvpmodel.conf`)
