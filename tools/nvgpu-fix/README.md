@@ -77,3 +77,8 @@ python3 -I tools/image_crcs.py /boot/Image $B/kh/kernel-5.10/Module.symvers --ko
 ```
 
 `gpu-driver-live-test.sh`: step 2 of the runbook (owner, sudo, from a text console).
+
+After the 11-19 14:14 crash (option A, owner's choice): `gpu-driver-reload-original.sh` unloads and
+reloads the **original** driver the same way, with crash capture on (`ramoops`, `kernel.panic=10`),
+to learn whether a run-time reload alone crashes the kernel. `read-crash-record.sh` copies the saved
+record after a crash reset. Both are run from `/home/xnx/gpu-test/` (`/tmp` is wiped at boot).

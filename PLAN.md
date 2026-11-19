@@ -17,7 +17,7 @@ fixes the clock within ~10 s, so the unit should stay at ~12-14 W.
 | 2 | find the extra load | **done 11-18**: stuck GPU clock; guard installed |
 | 3 | run normally, desktop use allowed, logger running; any reset → read `/var/log/vd-power/` and `journalctl -u gpu-clock-guard` | **watching** |
 | 4 | a supply with headroom anyway (summer heat in a vehicle) | when convenient |
-| 5 | fix the driver bug itself: rebuilt `nvgpu.ko` with NVIDIA's 35.2.1 fix (owner's choice 11-19; [plan and risks](journal/2026-11-19-can-the-gpu-driver-be-fixed.md); [runbook](docs/gpu-driver-fix.md)) | **live test 11-19 14:14: kernel crash** (watchdog reset, back on the original); cause undetermined (fix vs. run-time reload); owner to choose the next test; guard meanwhile |
+| 5 | fix the driver bug itself: rebuilt `nvgpu.ko` with NVIDIA's 35.2.1 fix (owner's choice 11-19; [plan and risks](journal/2026-11-19-can-the-gpu-driver-be-fixed.md); [runbook](docs/gpu-driver-fix.md)) | **live test 11-19 14:14: kernel crash** (watchdog reset, back on the original); cause undetermined (fix vs. run-time reload); owner chose option A: reload the original driver the same way with crash capture (`sudo bash ~/gpu-test/gpu-driver-reload-original.sh`); guard meanwhile |
 
 ## 1. Waiting on the owner
 
