@@ -34,3 +34,4 @@ You do not read the journal front to back: start from [`../FINDINGS.md`](../FIND
 | [11-18](2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) | Why does the power stay high after the video player is closed? | incident | GPU clock stuck at max; guard resets it in ~10 s |
 | [11-18](2026-11-18-publishing-the-repository.md) | Can the knowledge base go public? | change | Yes: alienord, fresh history; some things held back |
 | [11-19](2026-11-19-can-the-gpu-driver-be-fixed.md) | **Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?** | change | **OPEN**: fixed and installed (clock stays at 510 MHz); one reboot check left |
+| [11-19](2026-11-19-switching-between-test-and-production.md) | Can the unit be switched between test and production with one command? | change | **OPEN**: `tools/unit-mode.sh` written; live switch waits for owner |

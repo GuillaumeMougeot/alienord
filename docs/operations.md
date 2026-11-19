@@ -2,6 +2,18 @@
 
 How-to only. Why things are this way: [`system.md`](system.md) and the [`journal`](../journal/README.md).
 
+## Test or production? Ready to drive?
+
+```bash
+bash tools/unit-mode.sh               # status: mode, recording, cameras, GPS, GPU, disk, clock, uploads
+bash tools/unit-mode.sh production    # driving settings (restarts recording once, ~1 min), then status
+bash tools/unit-mode.sh test          # indoor settings, then status
+```
+
+No sudo. Ends with `READY FOR PRODUCTION` or `NOT READY` (the `FIX` lines say what). Today the
+modes differ only in camera exposure (test: up to 100 ms, indoors). GPS without a fix and uploads
+off are warnings, not blockers. Run it from the repository folder (`~/codes/alienord`).
+
 ## Is it working?
 
 ```bash

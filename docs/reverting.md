@@ -39,6 +39,7 @@ Each container's log then grows without limit again.
 
 Both cameras' `AutoExposureTimeMax` raised to 100000 µs = 100 ms (from rear 1000, side 200) through
 a config override. **Revert before driving**: at 80 km/h, 100 ms is over two metres of motion blur.
+`bash tools/unit-mode.sh production` does it and checks the result (`test` puts it back); by hand:
 
 ```bash
 sed -i '\#config-override/config.yaml:/workspaces#d' /opt/apps/deepstream/docker-compose.yaml
