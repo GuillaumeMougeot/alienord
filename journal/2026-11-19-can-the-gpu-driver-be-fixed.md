@@ -26,7 +26,8 @@ what a bad module could actually break and how it would be undone.
   layout randomisation (`GCC_PLUGIN_RANDSTRUCT` off); no module signature enforcement.
 - **How nvgpu loads:** from the root filesystem on the NVMe (`/etc/modules-load.d/nv.conf`), not
   from the initrd. It can be unloaded (`MODULE_UNLOAD=y`, the module has an exit function).
-- **Boot:** root is the NVMe (`nvme0n1p1`); the boot menu (`extlinux.conf`, 10 s timeout) appears
+- **Boot:** root is the NVMe (`nvme0n1p1`); the boot menu (`extlinux.conf`, `TIMEOUT 10`, which in
+  this format is probably tenths of a second, so ~1 s: too short to use; to be lengthened) appears
   to be read from the eMMC system (`mmcblk0p1`, not mounted), because the running command line
   does not match the NVMe copy of `extlinux.conf`. To be confirmed by root before relying on it.
 - The owner works at the unit (desktop `:1` plus tmux), so screen and keyboard are available for
@@ -54,3 +55,37 @@ loaded at boot:
 3. **Install (owner):** into `/lib/modules/5.10.104-tegra/updates/` (the original stays in
    `kernel/`), plus the boot-menu fallback entry; reboot and check.
 4. Keep the guard: once the fix is in, it should never act again.
+
+## How to revert, case by case (written before building, 11-19)
+
+The files involved:
+
+| file | what |
+|---|---|
+| `/lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko` | **original** (Lenovo), never modified. sha256 `b62d7dec1c2b91804c909a2c18251488e83b009db88369b2e9fa4573bbc13f67` |
+| `/lib/modules/5.10.104-tegra/updates/nvgpu.ko` | the **fixed** copy; this folder does not exist yet and is created only at install (step 3) |
+| `/lib/modules/5.10.104-tegra/modules.dep` | the module index, rebuilt by `depmod`; after install it points `nvgpu` at `updates/` |
+
+Because the index points at `updates/nvgpu.ko` after the install, **the one-command revert copies
+the original over the fixed copy**; it works without re-running `depmod`:
+
+```
+sudo cp /lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko /lib/modules/5.10.104-tegra/updates/nvgpu.ko && sync && sudo reboot
+```
+
+The tidy version (removes the folder entry and rebuilds the index; both steps are needed, deleting
+alone leaves the index pointing at a missing file and no GPU):
+`sudo rm /lib/modules/5.10.104-tegra/updates/nvgpu.ko && sudo depmod -a 5.10.104-tegra && sudo reboot`.
+Check afterwards: `modinfo -n nvgpu` shows the `kernel/...` path and `sha256sum` matches the above.
+
+| case | what you do |
+|---|---|
+| live test: new module refused | `sudo modprobe nvgpu` reloads the original, then restart the desktop and recording; or just reboot. Nothing was written to disk. |
+| live test: freeze or crash | reboot (hold the power button if frozen). Nothing was written to disk, so the original loads. |
+| installed: works but misbehaves | the one-command revert above, at any time. |
+| installed: refused at boot (no GPU, no desktop) | text console (Ctrl+Alt+F3) or SSH, log in, the one-command revert. |
+| installed: crashes at every boot | at power-on, pick the boot-menu entry **"no GPU driver"** (same system plus `module_blacklist=nvgpu`, added at install, with the menu wait lengthened). It boots without the GPU driver: console, one-command revert, reboot normally. |
+| that menu does not work either | take the NVMe out, put it in a USB enclosure on any Linux PC, mount its partition and copy `<mnt>/lib/modules/5.10.104-tegra/kernel/drivers/gpu/nvgpu/nvgpu.ko` over `<mnt>/lib/modules/5.10.104-tegra/updates/nvgpu.ko`; put it back. Possibly also a boot entry for the eMMC system (to check at install). Last resort: Lenovo reflash. |
+
+The install script will also place this revert as a root-owned script on the unit, so it is one
+short command to type from a console.
