@@ -32,8 +32,7 @@ with a fresh history; the private one keeps Trifork's history unchanged; no key-
 
 ## 2. Ready to do, when wanted
 
-- Another unit: GPU fix with `tools/nvgpu-fix/perm/install-nvgpu-fix.sh` (checks it is identical first; [runbook](docs/gpu-driver-fix.md#installing-on-another-unit)), then `sudo bash tools/stock-unit-fixes.sh` (uploads off, model cache, LED). **xnx1: both done 11-19** ([journal](journal/2026-11-19-bringing-xnx1-up-to-the-fixes.md)); **its SSD mount (step 0, added 11-20) still to run** ([journal](journal/2026-11-20-why-are-xnx1s-recordings-not-on-the-ssd.md)).
-- Commit xnx1's journal, mirror and script: the credential hook cannot run on xnx1 (no `~/vd-biodiversity`, no `bot.env`); commit from bluemar-bio-xnx-2, or decide how the hook should work on other units (and add xnx1's JFrog tokens to it).
+- Another unit: GPU fix with `tools/nvgpu-fix/perm/install-nvgpu-fix.sh` (checks it is identical first; [runbook](docs/gpu-driver-fix.md#installing-on-another-unit)), then `sudo bash tools/stock-unit-fixes.sh` (uploads off, model cache, LED). **xnx1: both done 11-19** ([journal](journal/2026-11-19-bringing-xnx1-up-to-the-fixes.md)); SSD mounted at `/media/data` 11-20 ([journal](journal/2026-11-20-why-are-xnx1s-recordings-not-on-the-ssd.md)). To see on xnx1: one reboot (the mount at boot) and a button press landing on the SSD.
 - xnx1's remaining stock settings (journal in memory, no log rotation, `updates.service`, Trifork's `monitoring` container), if it is to be used.
 
 - Find out why the 11-17 09:10 press recorded 3 frames instead of 7.

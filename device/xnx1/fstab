@@ -1,1 +1,2 @@
 /dev/root            /                     ext4           defaults                                     0 1
+UUID=38b399e8-5d77-462b-8c6b-59d26c9e1dcc /media/data ext4 defaults,nofail,x-systemd.device-timeout=30s 0 2

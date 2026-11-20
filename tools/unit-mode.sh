@@ -33,17 +33,18 @@ mounted() { grep -qF "$OVERRIDE:/workspaces" "$COMPOSE"; }
 exposures() { timeout 20 docker exec deepstream_app sed -n 's/.*AutoExposureTimeMax: *\([0-9]*\).*/\1/p' $APPCFG 2>/dev/null | tr '\n' ' ' | sed 's/ $//'; }
 
 restart_app() {
-    local old new i
-    old=$(docker inspect -f '{{.Id}}' deepstream_app 2>/dev/null)
+    # done when the app log (UTC) has a "Running..." line written after the signal; a new container
+    # ID is not reliable (a restart can reuse the container: xnx1, 11-20)
+    local since i last
+    since=$(date -u '+%F %T')
     echo "restarting the recording app (applies the change; ~1 min)..."
     docker exec deepstream_app sh -c 'kill -INT $(cat /var/shared/pid/deepstream.pid)' || { echo "could not signal the app"; return 1; }
-    for i in $(seq 1 60); do       # new container, then a fresh frame-rate line from it
+    for i in $(seq 1 60); do
         sleep 5
-        new=$(docker inspect -f '{{.Id}}' deepstream_app 2>/dev/null)
-        [ -n "$new" ] && [ "$new" != "$old" ] || continue
-        timeout 10 docker logs --tail 20 deepstream_app 2>&1 | grep -q 'PERF' && { echo "app restarted (new container ${new:0:12})"; return 0; }
+        last=$(tail -c 2000000 /var/shared/logs/deepstream.txt | grep -a 'Running\.\.\.' | tail -1 | cut -c1-19)
+        [ -n "$last" ] && [[ "$last" > "$since" ]] && { echo "app restarted (Running... at $last UTC)"; return 0; }
     done
-    echo "the app did not come back with frames within 5 min"; return 1
+    echo "the app did not log Running... within 5 min"; return 1
 }
 
 set_mode() {

@@ -36,22 +36,15 @@ echo "=== $(date '+%F %T') on $(hostname), repo $REPO ($(git -c safe.directory="
 
 backup() { [ -e "$1.orig-$DAY" ] || cp -p "$1" "$1.orig-$DAY"; }
 
-# restart deepstream the no-root way; done when a NEW container exists and the app log (UTC) has a
-# "Running..." line written after the signal. (11-19 on xnx1: polling `docker logs --tail 20` for a
-# PERF line missed a restart that had worked in 22 s; the app log is the reliable signal.)
+# restart deepstream the no-root way; done when the app log (UTC) has a "Running..." line written after
+# the signal. Not "a new container ID": on xnx1 a restart sometimes recreated the container and
+# sometimes restarted the same one (11-20). Not `docker logs --tail 20 | grep PERF`: it missed a
+# restart that had worked in 22 s (11-19).
 restart_ds() {
-    local old new i limit=$1 since
-    old=$(docker inspect -f '{{.Id}}' deepstream_app 2>/dev/null)
+    local since
     since=$(date -u '+%F %T')
     docker exec deepstream_app sh -c 'kill -INT $(cat /var/shared/pid/deepstream.pid)' || { echo "could not signal deepstream"; return 1; }
-    for i in $(seq 1 $((limit / 5))); do
-        sleep 5
-        new=$(docker inspect -f '{{.Id}}' deepstream_app 2>/dev/null)
-        [ -n "$new" ] && [ "$new" != "$old" ] || continue
-        last=$(tail -c 2000000 /var/shared/logs/deepstream.txt | grep -a 'Running\.\.\.' | tail -1 | cut -c1-19)
-        [ -n "$last" ] && [[ "$last" > "$since" ]] && { echo "deepstream running again after $((i * 5)) s (app log: Running... at $last UTC)"; return 0; }
-    done
-    echo "deepstream did not log Running... within $limit s"; return 1
+    wait_running "$since" "$1"
 }
 
 # wait until the app log (UTC) has a "Running..." line written after $1 (a UTC "%F %T" time)
@@ -81,6 +74,9 @@ else
     echo "stopping the recording app and the uploader..."
     since=$(date -u '+%F %T')
     systemctl stop deepstream-monitoring deepstream gcs
+    # stopping the services does not stop deepstream_app (xnx1, 11-20: it ran on, still seeing the old
+    # /media/data, and never logged a new "Running..."); stop the containers themselves
+    docker stop -t 30 deepstream_app gcs >/dev/null 2>&1
     for m in $(findmnt -n -o TARGET -S "$dev"); do umount "$m" || { echo "cannot unmount $m (a window open on it?); restarting the apps"; systemctl start gcs deepstream deepstream-monitoring; exit 1; }; done
     backup /etc/fstab
     grep -q "$uuid" /etc/fstab || echo "UUID=$uuid /media/data ext4 defaults,nofail,x-systemd.device-timeout=30s 0 2" >> /etc/fstab
@@ -140,9 +136,9 @@ if [ ! -d /media/data/models ]; then
     docker exec deepstream_app cp -a /workspaces/vd-biodiversity/bio/models /media/data/models || { echo "copy failed; stopping"; exit 1; }
     sync
 fi
-a=$(docker exec deepstream_app du -sb /workspaces/vd-biodiversity/bio/models | cut -f1)
+a=$(docker exec deepstream_app du -sb /workspaces/vd-biodiversity/bio/models 2>/dev/null | cut -f1)
 b=$(find /media/data/models -type f ! -name '*.engine' -printf '%s\n' | paste -sd+ | bc)
-echo "models: $(find /media/data/models -type f ! -name '*.engine' | wc -l) files, $b bytes copied (image folder: $a bytes incl. directories)"
+echo "models: $(find /media/data/models -type f ! -name '*.engine' | wc -l) files, $b bytes (the image's own folder: $a bytes, directories and any saved engines included)"
 if grep -qxF "$MODLINE" "$DS"; then
     echo "compose already mounts the model folder"
 else

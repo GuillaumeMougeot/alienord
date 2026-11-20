@@ -45,8 +45,9 @@ Then by task: using the unit, `docs/operations.md`; how it works, `docs/system.m
   undoes that within ~10 s, so check it is active before playing video, starting a browser or
   decoding anything on the unit ([journal](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md)).
   Run heavy jobs with `nice` and avoid long CPU-bound work.
-- **Check readiness properly after a restart.** Wait for a new `Running...` in the app log and a new
-  container ID; a frame-rate line can come from the old container.
+- **Check readiness properly after a restart.** Wait for a `Running...` in the app log written after
+  the restart; a frame-rate line can come from before it. A new container ID is not a reliable sign:
+  a restart can reuse the same container (xnx1, 11-20).
 - **`docker logs --since` is unusable** on these containers (1 GB+ logs, damaged by power cuts). Use `--tail`.
 - **mawk + `en_DK` locale:** `awk` compares fields as text, `printf "%d"` caps at 2³¹, and decimals
   are commas. Use `LC_ALL=C`, Python, or text matching for numbers.
