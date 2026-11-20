@@ -24,10 +24,11 @@ made to the unit. The reasoning is in the linked [`journal/`](journal/README.md)
 | 15 | On this unit, `awk` is mawk and the locale uses comma decimals: text-vs-number and `printf` traps, met three times. | [10-23](journal/2026-10-23-why-was-the-led-green-during-the-outage.md) |
 | 16 | **Hardware video decoding and Firefox's start-up leave the GPU clock at 1109 MHz**, above the power mode's 510 MHz cap, until reboot (+8 W). Cause: the L4T 35.1 GPU driver's clock arbiter falls back to the maximum and ignores the cap (NVIDIA fixed it in 35.2.1). Lowering the cap one step and restoring it resets the clock; `gpu-clock-guard` does this within ~10 s. With it, hardware-decoded 4K playback costs ~1 W. | [11-18](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) |
 | 17 | **The stuck GPU clock is fixed by NVIDIA's 35.2.1 driver change, rebuilt for this unit's 35.1 kernel**: with it, the hardware decoder and Firefox leave the clock at the 510 MHz cap. **Unloading and reloading `nvgpu` on a running system crashes the kernel, even with the original driver.** | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |
+| 18 | **Units are not identical beyond the kernel.** xnx1 runs a different deepstream image (no plant model), had its data SSD unmounted (apps writing to the system disk since ~2024-01; [11-20](journal/2026-11-20-why-are-xnx1s-recordings-not-on-the-ssd.md)), a journal in memory only, Trifork's `monitoring` container, and an LED script that reports to Trifork's JFrog fleet API. Its gcs image is the same as bluemar-bio-xnx-2's. Check each unit before copying a fix. | [11-19](journal/2026-11-19-bringing-xnx1-up-to-the-fixes.md) |
 
 ## 2. Changes made to the unit
 
-Each keeps the original beside it. **How to undo each one: [`docs/reverting.md`](docs/reverting.md).** Mirror: [`device/`](device/README.md).
+Each keeps the original beside it. **How to undo each one: [`docs/reverting.md`](docs/reverting.md).** Mirror: [`device/`](device/README.md). Rows marked **xnx1** are on the second unit; all others on bluemar-bio-xnx-2.
 
 | date | change | where | journal |
 |---|---|---|---|
@@ -44,3 +45,5 @@ Each keeps the original beside it. **How to undo each one: [`docs/reverting.md`]
 | 11-18 | **GPU clock guard** (owner, sudo) | `/opt/apps/gpu-clock-guard/`, `gpu-clock-guard.service` | [11-18](journal/2026-11-18-why-does-the-gpu-clock-stay-at-maximum.md) |
 | 11-18 | container logs capped at 3 × 10 MB each | the three `docker-compose.yaml` | [11-18](journal/2026-11-18-capping-the-container-logs.md) |
 | 11-19 | **rebuilt GPU driver, permanent** (owner, sudo; replaced the one-boot trial): modprobe rule + loader + clean-shutdown service; fixed driver at every boot, automatic fallback to the original after a crash. Original driver file untouched | `/etc/modprobe.d/nvgpu-fix.conf`, `/usr/local/sbin/nvgpu-fix-load`, `nvgpu-fix-shutdown.service`, `/var/lib/nvgpu-fix/` | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |
+| 11-19 | **xnx1:** GPU driver fix (`tools/nvgpu-fix/perm/install-nvgpu-fix.sh`, owner) | as on bluemar-bio-xnx-2 | [11-19](journal/2026-11-19-can-the-gpu-driver-be-fixed.md) |
+| 11-19 | **xnx1:** uploads off (switch + failed uploads keep files), gcs logs capped; models cached on `/media/data/models` (restart 10.5 min → 22 s); LED requires frame flow (drops Trifork's JFrog report). By `tools/stock-unit-fixes.sh` (owner, sudo) | `/opt/apps/gcs/`, `/opt/apps/deepstream/docker-compose.yaml`, `/opt/apps/deepstream-monitoring/launch.sh` (all `.orig-20261119`) | [11-19](journal/2026-11-19-bringing-xnx1-up-to-the-fixes.md) |

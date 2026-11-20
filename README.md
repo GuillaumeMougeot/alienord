@@ -49,6 +49,7 @@ reverse-engineered on unit `bluemar-bio-xnx-2`, and this repository holds everyt
 | **GPU driver fix** | rebuilt `nvgpu.ko` with NVIDIA's 35.2.1 clock fix: patch, build and verification tools; installer for identical units (`perm/`) | `tools/nvgpu-fix/` |
 | **reports** | plain-language summaries to pass on | `reports/` |
 | **test / production** | switch modes and check the unit is ready to drive | `tools/unit-mode.sh` |
+| **another unit** | bring a stock unit up to the fixes (uploads off, model cache, LED); done on xnx1 | `tools/stock-unit-fixes.sh`, `device/xnx1/` |
 | **superseded** | the old handbook and brief | `archive/` |
 
 ## 4. Conventions

@@ -1,0 +1,17 @@
+[Unit]
+Description=Camera configuration application
+StartLimitIntervalSec=10
+StartLimitBurst=3
+After=updates.service
+
+[Service]
+Type=oneshot
+Restart=on-failure
+RemainAfterExit=yes
+RestartSec=1
+User=app
+WorkingDirectory=/opt/apps/camera
+ExecStart=/opt/apps/camera/AutoIPConfigTool
+
+[Install]
+WantedBy=multi-user.target

@@ -29,7 +29,7 @@ Then by task: using the unit, `docs/operations.md`; how it works, `docs/system.m
   `~/backup/logs-20261023/system-logs.tar.gz`. `tools/check-secrets.sh` runs as the pre-commit and
   pre-push hook (`tools/install-hooks.sh` in a fresh clone): it checks for patterns *and* the exact
   live values, read at run time from `/var/secrets` and the private repository, never echoed, and
-  aborts if a value comes back empty (an empty pattern matches everything: 2026-11-17). **Never
+  aborts if a value comes back empty (an empty pattern matches everything: 2026-11-17). On another unit (xnx1) without the private repository or `bot.env` it checks the values present there (adding Trifork's JFrog tokens) and lists what it could not check. **Never
   bypass it** (`--no-verify`); if it fails, fix the content.
 - **Push only here, after the check passes** (owner, 2026-11-18: "commit and push there").
   **Never rewrite or push the private repository** `~/vd-biodiversity` (its hook refuses pushes).

@@ -110,7 +110,8 @@ status() {
     [ "$mode" = "pmode:0005" ] || warn "power mode '$mode' (expected pmode:0005)"
     # disk, clock, uploads
     local use; use=$(df --output=pcent /media/data 2>/dev/null | tail -1 | tr -dc 0-9)
-    if [ -z "$use" ]; then block "data disk /media/data not mounted"
+    if ! mountpoint -q /media/data; then block "/media/data is a folder on the system disk, not the data SSD (recordings land there). Fix: sudo bash tools/stock-unit-fixes.sh"
+    elif [ -z "$use" ]; then block "data disk /media/data not mounted"
     elif [ "$use" -ge 90 ]; then block "data disk ${use}% full"
     else ok "data disk ${use}% used ($(df -h --output=avail /media/data | tail -1 | tr -d ' ') free)"; fi
     [ "$(timedatectl show -p NTPSynchronized --value)" = yes ] && ok "clock synchronised" || warn "clock not synchronised (timestamps may drift)"

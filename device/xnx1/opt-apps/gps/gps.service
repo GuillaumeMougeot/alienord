@@ -1,0 +1,19 @@
+
+[Unit]
+Description=GPS application
+StartLimitIntervalSec=10
+StartLimitBurst=3
+After=updates.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=app
+WorkingDirectory=/opt/apps/gps
+EnvironmentFile=-/opt/apps/gps/.env
+ExecStartPre=/bin/bash -c 'echo -e "USER_ID=$(id -u app)\nGROUP_ID=$(id -g app)" > /opt/apps/gps/.env'
+ExecStart=/usr/bin/docker compose up --exit-code-from gps
+
+[Install]
+WantedBy=multi-user.target

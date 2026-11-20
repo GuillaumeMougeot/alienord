@@ -1,0 +1,73 @@
+#!/bin/sh
+# alienord 2026-11-19: load the rebuilt GPU driver (nvgpu.ko + NVIDIA's 35.2.1 clock fix) at boot,
+# with an automatic way back. modprobe runs this instead of loading nvgpu (/etc/modprobe.d/nvgpu-fix.conf).
+#
+# Loads the ORIGINAL driver when: /var/lib/nvgpu-fix/disabled exists (by hand, or set automatically
+# below); the fixed module is not the reviewed build; the state cannot be written (read-only root);
+# or the fixed module fails to load. Otherwise it writes "pending" and loads the FIXED driver.
+# "pending" is removed at every clean shutdown (nvgpu-fix-shutdown.service runs `nvgpu-fix-load clear`).
+# A boot that finds "pending" knows the last fixed-driver boot ended without a clean shutdown:
+#   reset reason SYS_RESET_N (power cut, power button): not held against the driver, fixed again;
+#   anything else (crash: MAINSWRST after kernel.panic=10; hang: BCCPLEXWDT): the fix is DISABLED
+#   (file "disabled", with the reason) and the original loads until the owner deletes that file.
+# With the fixed driver a kernel panic resets the unit after 10 s (kernel.panic=10).
+#
+# Back to the original by hand: sudo touch /var/lib/nvgpu-fix/disabled && sync && sudo reboot
+# Remove everything:            sudo bash /home/xnx/gpu-test/remove-nvgpu-fix.sh
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DIR=/var/lib/nvgpu-fix
+FIXED=$DIR/nvgpu-fixed.ko
+FIXED_SHA=761608e899ce995218b26393d223aa7d14ea5c32cb15efd8d1a669bb3242f3ec
+REASON_FILE=/sys/devices/platform/c360000.pmc/reset_reason
+
+say() {
+    echo "nvgpu-fix: $*" > /dev/kmsg 2>/dev/null
+    echo "$(date '+%F %T') $*" >> $DIR/boot.log 2>/dev/null
+}
+original() { exec modprobe --ignore-install nvgpu $CMDLINE_OPTS; }
+
+if [ "$1" = clear ]; then rm -f $DIR/pending; sync; exit 0; fi
+
+# one load at a time (udev and systemd-modules-load can both ask)
+if command exec 9>/run/nvgpu-fix.lock 2>/dev/null; then flock 9; fi
+grep -q '^nvgpu ' /proc/modules && exit 0
+
+if [ -e $DIR/disabled ]; then
+    say "fix disabled ($(head -c 300 $DIR/disabled)): loading the ORIGINAL driver"
+    original
+fi
+
+if [ -e $DIR/pending ]; then
+    reason=$(cat $REASON_FILE 2>/dev/null)
+    if [ "$reason" = SYS_RESET_N ]; then
+        say "the last boot with the fixed driver ended in a power cut (reset $reason): not the driver"
+    else
+        echo "$(date '+%F %T') automatic: the last boot with the fixed driver ended without a clean shutdown (reset ${reason:-unknown}). Delete this file to try the fixed driver again." > $DIR/disabled
+        rm -f $DIR/pending; sync
+        say "FIX DISABLED: the last boot with the fixed driver ended in a crash or hang (reset ${reason:-unknown}); loading the ORIGINAL driver"
+        original
+    fi
+fi
+
+if [ "$(sha256sum < $FIXED 2>/dev/null | cut -d' ' -f1)" != "$FIXED_SHA" ]; then
+    say "fixed module missing or not the reviewed build: loading the ORIGINAL driver"
+    original
+fi
+
+echo "$(date '+%F %T')" > $DIR/pending 2>/dev/null; sync
+if [ ! -s $DIR/pending ]; then
+    say "cannot write $DIR/pending (root file system read-only?): loading the ORIGINAL driver"
+    original
+fi
+
+old_panic=$(cat /proc/sys/kernel/panic)
+echo 10 > /proc/sys/kernel/panic
+modprobe nvmap
+if insmod $FIXED; then
+    say "loaded the FIXED driver (a kernel panic resets the unit in 10 s)"
+    exit 0
+fi
+echo "$old_panic" > /proc/sys/kernel/panic
+rm -f $DIR/pending; sync
+say "the fixed driver failed to load: loading the ORIGINAL driver"
+original

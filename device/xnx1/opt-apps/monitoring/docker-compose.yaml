@@ -1,0 +1,12 @@
+services:
+  monitoring:
+    image: europe-west1-docker.pkg.dev/nordfou-biodiversity/docker-registry-bio/monitoring:base
+    network_mode: "host"
+    container_name: monitoring
+    user: "${USER_ID}:${GROUP_ID}"
+    environment:
+      - ENV=test
+    volumes:
+      - /var/shared:/var/shared
+      - /var/secrets:/var/secrets
+      - /opt/apps:/opt/apps

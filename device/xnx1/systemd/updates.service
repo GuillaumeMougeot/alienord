@@ -1,0 +1,14 @@
+[Unit]
+Description=Update Application that runs on reboot
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+WorkingDirectory=/opt/scripts
+ExecStart=/bin/bash /opt/scripts/update_apps.sh
+
+[Install]
+WantedBy=multi-user.target

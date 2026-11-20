@@ -1,0 +1,20 @@
+
+[Unit]
+Description=Monitoring application
+After=network.target
+After=updates.service
+StartLimitIntervalSec=10
+StartLimitBurst=3
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=monitoring
+WorkingDirectory=/opt/apps/monitoring
+EnvironmentFile=-/opt/apps/monitoring/.env
+ExecStartPre=/bin/bash -c 'echo -e "USER_ID=$(id -u monitoring)\nGROUP_ID=$(id -g monitoring)" > /opt/apps/monitoring/.env'
+ExecStart=/usr/bin/docker compose up --exit-code-from monitoring
+
+[Install]
+WantedBy=multi-user.target

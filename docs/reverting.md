@@ -6,6 +6,21 @@ One place for every revert command. Newest first. Each change and its reason:
 **Restarting deepstream** applies a compose-file change and recreates the container (~30 s):
 `docker exec deepstream_app kill -INT $(cat /var/shared/pid/deepstream.pid)`.
 
+## xnx1: data SSD, uploads off, model cache, LED (2026-11-19/20)
+
+On the second unit only, made by `tools/stock-unit-fixes.sh`. Each line undoes one step (sudo: `xnx` is not in `apps` there). **Uploads go to Trifork's bucket.**
+
+```bash
+# data SSD at /media/data (11-20): back to the folder on the system disk
+sudo systemctl stop deepstream-monitoring deepstream gcs && sudo umount /media/data && sudo cp -p /etc/fstab.orig-20261120 /etc/fstab
+sudo rmdir /media/data && sudo mv /media/data.local-20261120 /media/data && sudo systemctl daemon-reload && sudo systemctl start gcs deepstream deepstream-monitoring
+sudo cp -p /opt/apps/gcs/docker-compose.yaml.orig-20261119 /opt/apps/gcs/docker-compose.yaml && docker stop gcs     # Trifork's uploader: uploads ON, deletes even on failure
+sudo sed -i 's/^UPLOAD_ENABLED=.*/UPLOAD_ENABLED=true/' /opt/apps/gcs/control/upload.conf && docker stop gcs          # or: uploads on, keep the fix
+sudo cp -p /opt/apps/deepstream/docker-compose.yaml.orig-20261119 /opt/apps/deepstream/docker-compose.yaml
+docker exec deepstream_app sh -c 'kill -INT $(cat /var/shared/pid/deepstream.pid)'                              # restarts take ~11 min again
+sudo cp -p /opt/apps/deepstream-monitoring/launch.sh.orig-20261119 /opt/apps/deepstream-monitoring/launch.sh && sudo systemctl restart deepstream-monitoring
+```
+
 ## Rebuilt GPU driver (`nvgpu.ko`, 2026-11-19)
 
 Back to the original for a while: `sudo touch /var/lib/nvgpu-fix/disabled && sync && sudo reboot`.

@@ -1,5 +1,7 @@
 # Unit configuration
 
+`xnx1/` mirrors the second unit (2026-11-20): `/opt/apps` (without `.env` files), the systemd units, the GPU-fix loader, `fstab`. Its changes, all kept as `*.orig-20261119`: [journal](../journal/2026-11-19-bringing-xnx1-up-to-the-fixes.md).
+
 `bluemar-bio-xnx-2/` mirrors the unit's host-side setup as of 2026-11-16:
 
 | Path | On the unit |

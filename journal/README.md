@@ -35,3 +35,5 @@ You do not read the journal front to back: start from [`../FINDINGS.md`](../FIND
 | [11-18](2026-11-18-publishing-the-repository.md) | Can the knowledge base go public? | change | Yes: alienord, fresh history; some things held back |
 | [11-19](2026-11-19-can-the-gpu-driver-be-fixed.md) | **Can the GPU driver bug be fixed by rebuilding `nvgpu.ko`?** | change | **OPEN**: fixed and installed (clock stays at 510 MHz); one reboot check left |
 | [11-19](2026-11-19-switching-between-test-and-production.md) | Can the unit be switched between test and production with one command? | change | Yes: `tools/unit-mode.sh`; unit in production since 11-19 15:53 |
+| [11-19](2026-11-19-bringing-xnx1-up-to-the-fixes.md) | Can a second unit (xnx1) get bluemar-bio-xnx-2's fixes? | change | Yes: uploads off, engines cached (10.5 min → 22 s), LED checks frames; `tools/stock-unit-fixes.sh` |
+| [11-20](2026-11-20-why-are-xnx1s-recordings-not-on-the-ssd.md) | **Why are xnx1's recordings not on its SSD?** | change | **OPEN**: SSD never mounted at `/media/data`; fix written, to run |
